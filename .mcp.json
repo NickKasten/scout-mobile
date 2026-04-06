@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "scout": {
+      "command": "node",
+      "args": ["/Users/nick/Desktop/Projects/scout-mobile/packages/core/bin/scout.mjs"]
+    }
+  }
+}
