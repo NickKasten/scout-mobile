@@ -1,13 +1,23 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import type { PlatformAdapter } from './adapters/PlatformAdapter.js'
+import type { PlatformAdapter, DeviceInfo, BootResult } from './adapters/PlatformAdapter.js'
 import type { FrameworkAdapter } from './adapters/FrameworkAdapter.js'
+
+function formatDimensions(info: DeviceInfo): string {
+  if (info.width > 0 && info.height > 0) {
+    return ` (${info.width}x${info.height} logical points)`
+  }
+  return ' (unknown dimensions)'
+}
 
 export function createScoutServer(adapter: PlatformAdapter, framework?: FrameworkAdapter): McpServer {
   const server = new McpServer({
     name: 'scout',
     version: '0.0.1',
   })
+
+  // Track device info for enriching responses
+  let lastDeviceInfo: DeviceInfo | undefined
 
   server.tool(
     'scout_check_environment',
@@ -34,12 +44,21 @@ export function createScoutServer(adapter: PlatformAdapter, framework?: Framewor
 
   server.tool(
     'simulator_boot',
-    'Boot an iOS Simulator device. Defaults to iPhone 16 Pro if no device name is specified.',
-    { device: z.string().optional().describe('Simulator device name (e.g. "iPhone 16 Pro")') },
+    'Boot an iOS Simulator device. Defaults to iPhone 17 Pro if no device name is specified.',
+    { device: z.string().optional().describe('Simulator device name (e.g. "iPhone 17 Pro") or UDID') },
     async ({ device }) => {
       try {
-        await adapter.boot(device)
-        return { content: [{ type: 'text', text: `Simulator booted: ${device ?? 'iPhone 16 Pro (default)'}` }] }
+        const result: BootResult = await adapter.boot(device)
+        lastDeviceInfo = result
+        const dims = formatDimensions(result)
+        const lines = [`Simulator booted: ${result.name}${dims}`, `UDID: ${result.udid}`]
+        if (result.warnings && result.warnings.length > 0) {
+          for (const warning of result.warnings) {
+            lines.push(`⚠️ ${warning}`)
+          }
+          lines.push('Tip: Use the UDID above with simulator_boot to always target this specific device.')
+        }
+        return { content: [{ type: 'text', text: lines.join('\n') }] }
       } catch (error) {
         return {
           content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
@@ -52,11 +71,23 @@ export function createScoutServer(adapter: PlatformAdapter, framework?: Framewor
   server.tool(
     'simulator_screenshot',
     'Take a screenshot of the currently booted iOS Simulator',
-    {},
-    async () => {
+    {
+      delayMs: z.number().min(0).max(5000).optional().describe('Delay in milliseconds before capturing (0-5000)'),
+    },
+    async ({ delayMs }) => {
       try {
-        const { data, mimeType } = await adapter.screenshot()
-        return { content: [{ type: 'image', data, mimeType }] }
+        const options = delayMs ? { delayMs } : undefined
+        const { data, mimeType } = await adapter.screenshot(options)
+        const content: Array<{ type: 'image'; data: string; mimeType: string } | { type: 'text'; text: string }> = [
+          { type: 'image', data, mimeType },
+        ]
+        if (lastDeviceInfo && lastDeviceInfo.width > 0) {
+          content.push({
+            type: 'text',
+            text: `Device: ${lastDeviceInfo.name} — coordinate space: ${lastDeviceInfo.width}x${lastDeviceInfo.height} logical points`,
+          })
+        }
+        return { content }
       } catch (error) {
         return {
           content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
@@ -147,13 +178,16 @@ export function createScoutServer(adapter: PlatformAdapter, framework?: Framewor
     'Capture system logs from the booted iOS Simulator for a specified duration',
     {
       seconds: z.number().min(1).max(30).describe('Duration in seconds to capture logs (1-30)'),
+      bundleId: z.string().optional().describe('Filter logs to this bundle ID (e.g. "com.example.app")'),
+      processName: z.string().optional().describe('Filter logs to this process name'),
     },
-    async ({ seconds }) => {
+    async ({ seconds, bundleId, processName }) => {
       try {
+        const options = (bundleId || processName) ? { bundleId, processName } : undefined
         const lines: string[] = []
         const stream = await adapter.logStream((line) => {
           lines.push(line)
-        })
+        }, options)
 
         await new Promise((resolve) => setTimeout(resolve, seconds * 1000))
         stream.stop()
@@ -172,5 +206,123 @@ export function createScoutServer(adapter: PlatformAdapter, framework?: Framewor
     },
   )
 
+  server.tool(
+    'simulator_type_text',
+    'Type text into the currently focused field on the iOS Simulator (requires idb)',
+    {
+      text: z.string().describe('Text to type into the focused field'),
+    },
+    async ({ text }) => {
+      try {
+        await adapter.typeText(text)
+        return { content: [{ type: 'text', text: `Typed: "${text}"` }] }
+      } catch (error) {
+        return {
+          content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+          isError: true,
+        }
+      }
+    },
+  )
+
+  server.tool(
+    'simulator_press_key',
+    'Press a key on the iOS Simulator (requires idb). Allowed keys: return, tab, space, deleteBackspace, delete, escape, upArrow, downArrow, leftArrow, rightArrow, home, end, pageUp, pageDown',
+    {
+      key: z.string().describe('Key name (e.g. "return", "tab", "deleteBackspace")'),
+    },
+    async ({ key }) => {
+      try {
+        await adapter.pressKey(key)
+        return { content: [{ type: 'text', text: `Pressed key: ${key}` }] }
+      } catch (error) {
+        return {
+          content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+          isError: true,
+        }
+      }
+    },
+  )
+
+  server.tool(
+    'simulator_clear_text',
+    'Clear text from the currently focused field on the iOS Simulator (requires idb). Attempts to select-all and delete; falls back to repeated backspace.',
+    {},
+    async () => {
+      try {
+        await adapter.clearText()
+        return { content: [{ type: 'text', text: 'Text cleared' }] }
+      } catch (error) {
+        return {
+          content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+          isError: true,
+        }
+      }
+    },
+  )
+
+  server.tool(
+    'simulator_tap_element',
+    'Tap an element by its accessibility label on the iOS Simulator (requires idb). Finds the element in the accessibility tree and taps its center.',
+    {
+      label: z.string().describe('Accessibility label of the element to tap'),
+    },
+    async ({ label }) => {
+      try {
+        const { element } = await adapter.tapElement(label)
+        const cx = Math.round(element.frame.x + element.frame.width / 2)
+        const cy = Math.round(element.frame.y + element.frame.height / 2)
+        return {
+          content: [{
+            type: 'text',
+            text: `Tapped [${element.type}] "${element.name}" at (${cx}, ${cy})`,
+          }],
+        }
+      } catch (error) {
+        return {
+          content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+          isError: true,
+        }
+      }
+    },
+  )
+
+  server.tool(
+    'simulator_accessibility_tree',
+    'Get the accessibility tree of the currently displayed screen on the iOS Simulator (requires idb). Returns element types, names, values, and positions.',
+    {},
+    async () => {
+      try {
+        const tree = await adapter.accessibilityTree()
+        // Format as a readable tree for Claude
+        const lines: string[] = []
+        for (const el of tree.elements) {
+          formatElement(el, lines, 0)
+        }
+        const text = lines.length > 0
+          ? lines.join('\n')
+          : '(no accessibility elements found)'
+        return { content: [{ type: 'text', text }] }
+      } catch (error) {
+        return {
+          content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+          isError: true,
+        }
+      }
+    },
+  )
+
   return server
+}
+
+function formatElement(el: { type: string; name: string; value?: string; frame: { x: number; y: number; width: number; height: number }; children?: unknown[] }, lines: string[], indent: number): void {
+  const prefix = '  '.repeat(indent)
+  const label = el.name ? ` "${el.name}"` : ''
+  const val = el.value ? ` value="${el.value}"` : ''
+  lines.push(`${prefix}[${el.type}]${label}${val} at (${el.frame.x}, ${el.frame.y}) size ${el.frame.width}x${el.frame.height}`)
+  if (Array.isArray(el.children)) {
+    for (const child of el.children) {
+      formatElement(child as typeof el, lines, indent + 1)
+    }
+  }
 }
