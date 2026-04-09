@@ -61,50 +61,53 @@ export function analyzeLogLines(lines: string[]): Issue[] {
 export async function runTestLoop(options: TestLoopOptions): Promise<TestLoopResult> {
   const { adapter, framework, device, logDurationMs = 5000 } = options
   const timestamp = new Date().toISOString()
-  const deviceName = device ?? 'booted'
 
-  // Boot simulator
-  await adapter.boot(device)
-
-  // Build app
-  const appPath = await framework.build()
-
-  // Install and launch
-  await adapter.install(appPath)
-  const bundleId = framework.getBundleId()
-  await adapter.launch(bundleId)
-
-  // Wait for app to settle
-  await sleep(2000)
-
-  // Take screenshot
-  let screenshot: string | undefined
   try {
-    const result = await adapter.screenshot()
-    screenshot = result.data
-  } catch {
-    // Screenshot failure is non-fatal
+    // Boot simulator
+    const deviceInfo = await adapter.boot(device)
+
+    // Build app
+    const appPath = await framework.build()
+
+    // Install and launch
+    await adapter.install(appPath)
+    const bundleId = framework.getBundleId()
+    await adapter.launch(bundleId)
+
+    // Wait for app to settle
+    await sleep(2000)
+
+    // Take screenshot
+    let screenshot: string | undefined
+    try {
+      const result = await adapter.screenshot()
+      screenshot = result.data
+    } catch {
+      // Screenshot failure is non-fatal
+    }
+
+    // Collect logs
+    const logLines: string[] = []
+    const stream = await adapter.logStream((line) => {
+      logLines.push(line)
+    })
+
+    await sleep(logDurationMs)
+    stream.stop()
+
+    // Analyze
+    const issues = analyzeLogLines(logLines)
+
+    const report: TestReport = {
+      timestamp,
+      device: deviceInfo.name,
+      issues,
+      screenshot,
+      logs: logLines,
+    }
+
+    return { report, issues }
+  } finally {
+    await adapter.teardown()
   }
-
-  // Collect logs
-  const logLines: string[] = []
-  const stream = await adapter.logStream((line) => {
-    logLines.push(line)
-  })
-
-  await sleep(logDurationMs)
-  stream.stop()
-
-  // Analyze
-  const issues = analyzeLogLines(logLines)
-
-  const report: TestReport = {
-    timestamp,
-    device: deviceName,
-    issues,
-    screenshot,
-    logs: logLines,
-  }
-
-  return { report, issues }
 }

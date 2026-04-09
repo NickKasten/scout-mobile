@@ -376,16 +376,38 @@ web              ×  expo             ← Phase 3
 ### Interface Definitions
 
 ```typescript
+interface DeviceInfo {
+  udid: string
+  name: string
+  width: number    // logical points (0 = unknown)
+  height: number
+}
+
+interface AccessibilityElement {
+  type: string                    // "Button", "TextField", "StaticText"
+  name: string                    // accessibility label
+  value?: string                  // current value for inputs
+  frame: { x: number; y: number; width: number; height: number }
+  children?: AccessibilityElement[]
+}
+
+interface AccessibilityTree {
+  elements: AccessibilityElement[]
+  raw: string                     // full JSON for debugging
+}
+
 interface PlatformAdapter {
   checkEnvironment(): Promise<EnvironmentReport>
-  boot(device?: string): Promise<void>
+  boot(device?: string): Promise<DeviceInfo>
   install(artifactPath: string): Promise<void>
   launch(bundleId: string): Promise<void>
-  screenshot(): Promise<string>                    // base64 PNG
-  tap(x: number, y: number): Promise<void>
-  swipe(start: Point, end: Point): Promise<void>
-  logStream(seconds: number): Promise<string[]>
-  accessibilityTree(): Promise<object>
+  screenshot(): Promise<{ data: string; mimeType: string }>
+  tap(point: Point): Promise<void>
+  swipe(from: Point, to: Point): Promise<void>
+  logStream(callback: (line: string) => void): Promise<{ stop: () => void }>
+  typeText(text: string): Promise<void>
+  pressKey(key: string): Promise<void>
+  accessibilityTree(): Promise<AccessibilityTree>
   teardown(): Promise<void>
 }
 
@@ -455,15 +477,17 @@ scout-mobile/
 | Tool | Parameters | Returns | Notes |
 |---|---|---|---|
 | `scout_check_environment` | — | `EnvironmentReport` | Run before any simulator interaction |
-| `simulator_boot` | `device?: string` | `void` | Defaults to config device |
+| `simulator_boot` | `device?: string` | `DeviceInfo` | Returns UDID, name, logical dimensions |
 | `simulator_install` | `bundlePath: string` | `void` | |
 | `simulator_launch` | `bundleId: string` | `void` | |
-| `simulator_screenshot` | — | `string` (base64) | PNG, fed into Claude's vision |
-| `simulator_tap` | `x: number, y: number` | `void` | |
-| `simulator_swipe` | `startX, startY, endX, endY` | `void` | |
+| `simulator_screenshot` | — | `string` (base64) + dimensions | PNG + device coordinate space |
+| `simulator_tap` | `x: number, y: number` | `void` | Bounds-checked against device dimensions |
+| `simulator_swipe` | `startX, startY, endX, endY` | `void` | Bounds-checked against device dimensions |
 | `simulator_log_stream` | `seconds: number` | `string[]` | Metro + system logs |
-| `simulator_accessibility_tree` | — | `object` | idb-powered, named element access |
-| `simulator_run_flow` | `flowName: string` | `FlowResult` | Reads `flows.yaml` |
+| `simulator_type_text` | `text: string` | `void` | idb required, types into focused field |
+| `simulator_press_key` | `key: string` | `void` | idb required, allowlisted key names |
+| `simulator_accessibility_tree` | — | `AccessibilityTree` | idb required, element names + frames |
+| `simulator_run_flow` | `flowName: string` | `FlowResult` | Reads `flows.yaml` (Phase 3) |
 
 ---
 
@@ -475,7 +499,7 @@ scout-mobile/
   "framework": "react-native",
   "testMode": "suggest",
   "suggestMessage": "Done. This looks like a good checkpoint — run a simulator check? `/scout test`",
-  "device": "iPhone 16 Pro",
+  "device": "iPhone 17 Pro",
   "bundleId": "com.yourapp",
   "metroPort": 8081,
   "flows": "./claude-mobile-flows.yaml",
@@ -519,6 +543,8 @@ flows:
 ```
 
 Element name resolution uses the accessibility tree via `idb` (Phase 2+). Coordinate tapping is available from Phase 1.
+
+**Available step types:** `tap` (element or coordinates), `type` (text input), `press` (key event, e.g. `press: { key: "return" }`), `swipe`, `assert`.
 
 ---
 
@@ -564,31 +590,33 @@ Full report → .claude/mobile-reports/2026-04-01T14:32.md
 
 ## 13. Build Phases
 
-### Phase 0 — Proof of Concept ← *current*
+### Phase 0 — Proof of Concept ✅
 - Scaffold MCP server (`@modelcontextprotocol/sdk` + TypeScript, monorepo-ready)
 - Implement `PlatformAdapter` and `FrameworkAdapter` interfaces
 - Implement `IOSSimulatorAdapter` with OS and environment checks
 - Expose `scout_check_environment` and `simulator_screenshot` tools
 - Set up Vitest with unit tests for validation and OS detection
-- Validate Claude can describe the simulator UI from a screenshot
 
-**Done when:** Claude Code boots a sim, takes a screenshot, and describes the UI. Unit tests pass on all platforms.
+**Done when:** Claude Code boots a sim, takes a screenshot, and describes the UI. ✅
 
-### Phase 1 — MVP Loop
+### Phase 1 — MVP Loop ✅
 - Implement `ReactNativeAdapter`
 - Metro log streaming and crash / red screen detection
-- Full build → install → launch → screenshot → log → report loop
+- Full build → install → launch → screenshot → log → report loop (8 MCP tools)
 - Coordinate-based tap for early flow support
-- Unit tests for report writer and test loop
+- Unit tests for report writer and test loop (64 tests)
 
-**Done when:** Claude catches a red screen and surfaces a suggested fix.
+**Done when:** Claude catches a red screen and surfaces a suggested fix. ✅
 
-### Phase 2 — Full Interaction Loop
-- `idb` integration for gestures and element-name targeting via accessibility tree
-- Flow runner (`simulator_run_flow`, reads `flows.yaml`)
-- Flow assertions (`assert: { visible: "..." }`)
-- Performance / jank detection
-- Integration test suite for `IOSSimulatorAdapter`
+### Phase 2 — Full Interaction Loop ← *current*
+- ✅ Device dimension awareness at boot (static lookup table, `DeviceInfo` return type)
+- ✅ Bounds checking on `tap()` and `swipe()` coordinates
+- ✅ `simulator_type_text` and `simulator_press_key` tools (idb-based, validated input)
+- ✅ `simulator_accessibility_tree` implementation (idb `describe-all`, structured `AccessibilityTree`)
+- ☐ Flow runner (`simulator_run_flow`, reads `flows.yaml`)
+- ☐ Flow assertions (`assert: { visible: "..." }`)
+- ☐ Performance / jank detection
+- ☐ Integration test suite for `IOSSimulatorAdapter`
 
 **Done when:** Claude executes a named flow end-to-end and reports across all issue categories.
 

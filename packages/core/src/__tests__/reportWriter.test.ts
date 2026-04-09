@@ -30,7 +30,7 @@ beforeEach(() => {
 function makeReport(overrides: Partial<TestReport> = {}): TestReport {
   return {
     timestamp: '2026-04-01T12:00:00.000Z',
-    device: 'iPhone 16 Pro',
+    device: 'iPhone 17 Pro',
     issues: [],
     logs: [],
     ...overrides,
@@ -168,6 +168,12 @@ describe('writeReport', () => {
 
   it('rejects report dir outside project root', () => {
     expect(() => writeReport('../outside', '/home/project', makeReport())).toThrow(
+      'Report directory must be within project root',
+    )
+  })
+
+  it('rejects report dir that is a prefix attack on project root', () => {
+    expect(() => writeReport('../project-evil', '/home/project', makeReport())).toThrow(
       'Report directory must be within project root',
     )
   })

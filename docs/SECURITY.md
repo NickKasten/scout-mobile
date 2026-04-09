@@ -47,6 +47,8 @@ You do not need a complete exploit. A clear description of the issue is enough t
 Scout is an MCP server that shells out to `xcrun simctl` and `idb` on macOS. The following mitigations are built into the codebase:
 
 - **Command injection prevention** — all shell commands use `execFileSync` with an args array, never string interpolation. User-supplied values (bundle IDs, device names, paths) are validated against allowlists before use.
+- **Text input validation** — `simulator_type_text` validates input against a printable-ASCII allowlist (plus tab/newline). Control characters and null bytes are rejected before being passed to `idb ui text`.
+- **Key event allowlist** — `simulator_press_key` uses a strict set of allowed key names (return, tab, escape, arrow keys, etc.). No raw keycodes are accepted.
 - **Path traversal prevention** — all file paths are resolved and checked to be within their expected directory before any read or write.
 - **No network egress** — Scout makes no outbound network requests beyond localhost (Metro bundler on a configurable port). It does not phone home or collect telemetry.
 - **No credential storage** — Scout does not store, transmit, or log any credentials, tokens, or user-identifying data.
@@ -59,6 +61,9 @@ Scout is an MCP server that shells out to `xcrun simctl` and `idb` on macOS. The
 The following are in scope for security reports:
 
 - Command injection via user-supplied config values
+- Text input validation bypass (e.g. injecting control characters via `simulator_type_text`)
+- Key name allowlist bypass (e.g. passing arbitrary keycodes via `simulator_press_key`)
+- Accessibility tree output injection (malformed idb JSON causing unexpected behavior)
 - Path traversal in report or flow file handling
 - MCP tool input validation bypasses
 - Dependency vulnerabilities in published packages

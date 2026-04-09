@@ -104,7 +104,7 @@ export function generateSummary(report: TestReport): string {
 
 export function writeReport(reportDir: string, projectRoot: string, report: TestReport): string {
   const resolvedDir = resolve(projectRoot, reportDir)
-  if (!resolvedDir.startsWith(resolve(projectRoot))) {
+  if (!resolvedDir.startsWith(resolve(projectRoot) + '/')) {
     throw new Error(`Report directory must be within project root`)
   }
 
