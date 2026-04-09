@@ -1,19 +1,37 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { PlatformAdapter, EnvironmentReport, Point } from '../adapters/PlatformAdapter.js'
+import type { PlatformAdapter, EnvironmentReport, Point, DeviceInfo, BootResult, AccessibilityTree, AccessibilityElement, LogStreamOptions } from '../adapters/PlatformAdapter.js'
 import type { FrameworkAdapter } from '../adapters/FrameworkAdapter.js'
 import { analyzeLogLines, runTestLoop } from '../loop/testLoop.js'
+
+const MOCK_DEVICE_INFO: DeviceInfo = {
+  udid: 'AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE',
+  name: 'iPhone 17 Pro',
+  width: 402,
+  height: 874,
+}
+
+const MOCK_A11Y_TREE: AccessibilityTree = {
+  elements: [{ type: 'Button', name: 'OK', frame: { x: 0, y: 0, width: 100, height: 50 } }],
+  raw: '[]',
+}
+
+const MOCK_ELEMENT: AccessibilityElement = { type: 'Button', name: 'OK', frame: { x: 0, y: 0, width: 100, height: 50 } }
 
 function createMockAdapter(): PlatformAdapter {
   return {
     checkEnvironment: vi.fn<() => Promise<EnvironmentReport>>().mockResolvedValue({ ok: true, checks: [] }),
-    boot: vi.fn<(device?: string) => Promise<void>>().mockResolvedValue(undefined),
+    boot: vi.fn<(device?: string) => Promise<BootResult>>().mockResolvedValue(MOCK_DEVICE_INFO),
     install: vi.fn<(appPath: string) => Promise<void>>().mockResolvedValue(undefined),
     launch: vi.fn<(bundleId: string) => Promise<void>>().mockResolvedValue(undefined),
     screenshot: vi.fn().mockResolvedValue({ data: 'base64png', mimeType: 'image/png' }),
     tap: vi.fn<(point: Point) => Promise<void>>().mockResolvedValue(undefined),
     swipe: vi.fn<(from: Point, to: Point) => Promise<void>>().mockResolvedValue(undefined),
     logStream: vi.fn().mockResolvedValue({ stop: vi.fn() }),
-    accessibilityTree: vi.fn<() => Promise<string>>().mockResolvedValue(''),
+    typeText: vi.fn<(text: string) => Promise<void>>().mockResolvedValue(undefined),
+    pressKey: vi.fn<(key: string) => Promise<void>>().mockResolvedValue(undefined),
+    clearText: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
+    tapElement: vi.fn<(label: string) => Promise<{ element: AccessibilityElement }>>().mockResolvedValue({ element: MOCK_ELEMENT }),
+    accessibilityTree: vi.fn<() => Promise<AccessibilityTree>>().mockResolvedValue(MOCK_A11Y_TREE),
     teardown: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
   }
 }
@@ -98,7 +116,7 @@ describe('runTestLoop', () => {
     const framework = createMockFramework()
     const callOrder: string[] = []
 
-    vi.mocked(adapter.boot).mockImplementation(async () => { callOrder.push('boot') })
+    vi.mocked(adapter.boot).mockImplementation(async () => { callOrder.push('boot'); return MOCK_DEVICE_INFO })
     vi.mocked(framework.build).mockImplementation(async () => { callOrder.push('build'); return '/app.app' })
     vi.mocked(adapter.install).mockImplementation(async () => { callOrder.push('install') })
     vi.mocked(adapter.launch).mockImplementation(async () => { callOrder.push('launch') })
@@ -110,11 +128,30 @@ describe('runTestLoop', () => {
     expect(callOrder).toEqual(['boot', 'build', 'install', 'launch', 'screenshot', 'logStream'])
   })
 
-  it('propagates build errors', async () => {
+  it('uses device name from DeviceInfo in report', async () => {
+    const adapter = createMockAdapter()
+    const framework = createMockFramework()
+
+    const result = await runTestLoop({ adapter, framework, logDurationMs: 10 })
+
+    expect(result.report.device).toBe('iPhone 17 Pro')
+  })
+
+  it('calls teardown on success', async () => {
+    const adapter = createMockAdapter()
+    const framework = createMockFramework()
+
+    await runTestLoop({ adapter, framework, logDurationMs: 10 })
+
+    expect(adapter.teardown).toHaveBeenCalledOnce()
+  })
+
+  it('calls teardown on failure', async () => {
     const adapter = createMockAdapter()
     const framework = createMockFramework()
     vi.mocked(framework.build).mockRejectedValue(new Error('Build failed'))
 
     await expect(runTestLoop({ adapter, framework, logDurationMs: 10 })).rejects.toThrow('Build failed')
+    expect(adapter.teardown).toHaveBeenCalledOnce()
   })
 })
