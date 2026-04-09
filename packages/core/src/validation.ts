@@ -33,3 +33,63 @@ export function safeResolvePath(baseDir: string, filename: string): string {
   }
   return resolved
 }
+
+// Printable ASCII (0x20-0x7E) plus tab (0x09) and newline (0x0A)
+const PRINTABLE_RE = /^[\x09\x0A\x20-\x7E]+$/
+
+export function validateTextInput(text: string): string {
+  if (text.length === 0) {
+    throw new ScoutValidationError('Text input must not be empty')
+  }
+  if (text.length > 1000) {
+    throw new ScoutValidationError(`Text input too long (${text.length} chars, max 1000)`)
+  }
+  if (!PRINTABLE_RE.test(text)) {
+    throw new ScoutValidationError('Text input contains invalid characters (printable ASCII, tab, and newline only)')
+  }
+  return text
+}
+
+const ALLOWED_KEYS = new Set([
+  'return', 'tab', 'space', 'deleteBackspace', 'delete', 'escape',
+  'upArrow', 'downArrow', 'leftArrow', 'rightArrow',
+  'home', 'end', 'pageUp', 'pageDown',
+])
+
+export function validateKeyName(key: string): string {
+  if (!ALLOWED_KEYS.has(key)) {
+    throw new ScoutValidationError(
+      `Invalid key name: "${key}". Allowed: ${[...ALLOWED_KEYS].join(', ')}`,
+    )
+  }
+  return key
+}
+
+const UDID_RE = /^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$/
+
+export function isUdid(value: string): boolean {
+  return UDID_RE.test(value)
+}
+
+export function validateDeviceIdentifier(value: string): string {
+  if (!value) {
+    throw new ScoutValidationError('Device identifier must not be empty')
+  }
+  if (isUdid(value)) return value
+  return validateDeviceName(value)
+}
+
+const LABEL_RE = /^[\x20-\x7E]+$/
+
+export function validateAccessibilityLabel(label: string): string {
+  if (!label || label.length === 0) {
+    throw new ScoutValidationError('Accessibility label must not be empty')
+  }
+  if (label.length > 200) {
+    throw new ScoutValidationError(`Accessibility label too long (${label.length} chars, max 200)`)
+  }
+  if (!LABEL_RE.test(label)) {
+    throw new ScoutValidationError('Accessibility label contains invalid characters (printable ASCII only)')
+  }
+  return label
+}

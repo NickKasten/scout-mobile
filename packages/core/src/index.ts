@@ -4,12 +4,22 @@ export {
   validateDeviceName,
   validateFlowName,
   safeResolvePath,
+  validateTextInput,
+  validateKeyName,
+  isUdid,
+  validateDeviceIdentifier,
+  validateAccessibilityLabel,
 } from './validation.js'
 export type {
   PlatformAdapter,
   EnvironmentReport,
   EnvironmentCheck,
   Point,
+  DeviceInfo,
+  BootResult,
+  AccessibilityElement,
+  AccessibilityTree,
+  LogStreamOptions,
 } from './adapters/PlatformAdapter.js'
 export type {
   FrameworkAdapter,
