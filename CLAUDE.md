@@ -10,15 +10,13 @@ The canonical design document is `SPEC.md` — consult it for detailed decisions
 
 ## Current Status
 
-Phase 0 — the repo is pre-scaffolding. Only `.gitignore`, `LICENSE`, `SPEC.md`, and `SECURITY.md` exist. Source code, `package.json`, and CI workflows have not been created yet.
+Phase 2 in progress — device awareness, text input, and accessibility tree are implemented. 13 MCP tools, unit tests passing. Flow runner and flow assertions are next.
 
-## Planned Commands
-
-Once scaffolded (npm workspaces monorepo):
+## Commands
 
 - `npm ci` — install (CI) / `npm install` (local)
-- `npm run build` — compile TypeScript (per-package)
-- `npm run test` — unit tests via Vitest (runs on any platform)
+- `npm run build` — compile TypeScript (per-package via `tsc --build`)
+- `npm run test` — unit tests via Vitest (runs on any platform, 107 tests)
 - `npm run test:integration` — integration tests (macOS only, requires Xcode + booted simulator)
 - `npm audit --audit-level=high` — security audit (blocks on high/critical in CI)
 
@@ -34,7 +32,7 @@ ios-simulator    ×  react-native     ← v1
 android-emulator ×  flutter          ← Phase 2
 ```
 
-- `PlatformAdapter` — controls the device/sim: `boot()`, `install()`, `launch()`, `screenshot()`, `tap()`, `swipe()`, `logStream()`, `accessibilityTree()`, `teardown()`
+- `PlatformAdapter` — controls the device/sim: `boot()` → `BootResult`, `install()`, `launch()`, `screenshot()`, `tap()`, `swipe()`, `logStream()`, `typeText()`, `pressKey()`, `clearText()`, `tapElement()`, `accessibilityTree()` → `AccessibilityTree`, `teardown()`
 - `FrameworkAdapter` — builds the app: `build()` → artifact path, `getBundleId()`, optional `getMetroLogs()`
 
 ### Package Structure (npm workspaces)
@@ -46,9 +44,9 @@ packages/
 └── framework-rn/   @scout-mobile/framework-rn   — ReactNativeAdapter (npx react-native run-ios)
 ```
 
-### MCP Tools (10 total)
+### MCP Tools (13 implemented)
 
-`scout_check_environment`, `simulator_boot`, `simulator_install`, `simulator_launch`, `simulator_screenshot`, `simulator_tap`, `simulator_swipe`, `simulator_log_stream`, `simulator_accessibility_tree`, `simulator_run_flow`
+`scout_check_environment`, `simulator_boot`, `simulator_screenshot`, `simulator_install`, `simulator_launch`, `simulator_tap`, `simulator_swipe`, `simulator_log_stream`, `simulator_type_text`, `simulator_press_key`, `simulator_clear_text`, `simulator_tap_element`, `simulator_accessibility_tree`
 
 ## Security Rules — Must Follow
 
@@ -61,6 +59,7 @@ packages/
 3. **Prevent path traversal** — `resolve()` + prefix-check for any file path operations.
 4. **Zero runtime dependencies target** for `@scout-mobile/core`. The only justified runtime dep is `@modelcontextprotocol/sdk`.
 5. **Only publish `dist/`, `README.md`, `LICENSE`** — strict `files` field in each package.json.
+6. **Validate text input** with printable-ASCII allowlist. Key events use a strict name allowlist. No raw keycodes.
 
 ## Testing Conventions
 
