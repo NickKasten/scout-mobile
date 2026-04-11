@@ -1,7 +1,7 @@
 # Scout — Software Design Document
 
 > **Package:** `@scout-mobile/core`
-> **License:** MIT
+> **License:** AGPL-3.0
 > **Author:** Nicholas Kasten
 > **Status:** Phase 2 — Active Development
 
@@ -57,4 +57,4 @@ Scout is a Claude Code MCP plugin that closes the iOS Simulator iteration loop f
 | CI | GitHub Actions |
 | Dependency scanning | Dependabot + `npm audit` in CI |
 | Package registry | npm (`@scout-mobile` org) |
-| License | MIT |
+| License | AGPL-3.0 |

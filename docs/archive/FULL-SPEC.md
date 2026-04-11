@@ -1,7 +1,7 @@
 # Scout — Software Design Document
 
 > **Package:** `@scout-mobile/core`
-> **License:** MIT
+> **License:** AGPL-3.0
 > **Author:** Nicholas Kasten
 > **Status:** Phase 0 — Active Development
 
@@ -668,4 +668,4 @@ Full report → .claude/mobile-reports/2026-04-01T14:32.md
 | CI | GitHub Actions |
 | Dependency scanning | Dependabot + `npm audit` in CI |
 | Package registry | npm (`@scout-mobile` org) |
-| License | MIT |
+| License | AGPL-3.0 |
