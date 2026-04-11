@@ -108,4 +108,4 @@ Scout treats every user input as untrusted and shells out only through `execFile
 
 ## License
 
-MIT © 2026 Nicholas Kasten. See [`LICENSE`](LICENSE).
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0).
