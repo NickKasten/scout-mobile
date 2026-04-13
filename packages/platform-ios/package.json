@@ -1,7 +1,16 @@
 {
   "name": "@scout-mobile/platform-ios",
-  "version": "0.0.1",
+  "version": "0.1.0",
+  "description": "iOS Simulator platform adapter for Scout — xcrun simctl and idb integration",
   "license": "AGPL-3.0",
+  "author": "Nicholas Kasten",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nicholaskasten/scout-mobile.git",
+    "directory": "packages/platform-ios"
+  },
+  "homepage": "https://github.com/nicholaskasten/scout-mobile#readme",
+  "bugs": "https://github.com/nicholaskasten/scout-mobile/issues",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -16,7 +25,25 @@
     "README.md",
     "LICENSE"
   ],
+  "scripts": {
+    "prepublishOnly": "tsc --build"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "mcp",
+    "ios",
+    "simulator",
+    "xcrun",
+    "simctl",
+    "idb",
+    "xcode"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
-    "@scout-mobile/core": "*"
+    "@scout-mobile/core": "0.1.0"
   }
 }

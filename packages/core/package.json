@@ -1,7 +1,16 @@
 {
   "name": "@scout-mobile/core",
-  "version": "0.0.1",
+  "version": "0.1.0",
+  "description": "MCP server for AI-driven iOS Simulator control — screenshot, tap, swipe, type, and accessibility inspection",
   "license": "AGPL-3.0",
+  "author": "Nicholas Kasten",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nicholaskasten/scout-mobile.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/nicholaskasten/scout-mobile#readme",
+  "bugs": "https://github.com/nicholaskasten/scout-mobile/issues",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -20,6 +29,24 @@
     "README.md",
     "LICENSE"
   ],
+  "scripts": {
+    "prepublishOnly": "tsc --build"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "mcp",
+    "ios",
+    "simulator",
+    "testing",
+    "accessibility",
+    "claude",
+    "ai"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
     "zod": "^3.23.0"
