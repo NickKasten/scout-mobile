@@ -6,11 +6,11 @@
   "author": "Nicholas Kasten",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nicholaskasten/scout-mobile.git",
+    "url": "https://github.com/NickKasten/scout-mobile.git",
     "directory": "packages/framework-rn"
   },
-  "homepage": "https://github.com/nicholaskasten/scout-mobile#readme",
-  "bugs": "https://github.com/nicholaskasten/scout-mobile/issues",
+  "homepage": "https://github.com/NickKasten/scout-mobile#readme",
+  "bugs": "https://github.com/NickKasten/scout-mobile/issues",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
