@@ -1,6 +1,7 @@
 import type { PlatformAdapter } from '../adapters/PlatformAdapter.js'
 import type { FrameworkAdapter } from '../adapters/FrameworkAdapter.js'
 import type { Issue, TestReport } from '../report/reportWriter.js'
+import { detectJank } from './jankDetector.js'
 
 export interface TestLoopOptions {
   adapter: PlatformAdapter
@@ -97,6 +98,8 @@ export async function runTestLoop(options: TestLoopOptions): Promise<TestLoopRes
 
     // Analyze
     const issues = analyzeLogLines(logLines)
+    const jankIssues = detectJank(logLines)
+    issues.push(...jankIssues)
 
     const report: TestReport = {
       timestamp,
