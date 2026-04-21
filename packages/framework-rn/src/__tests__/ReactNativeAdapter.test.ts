@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { sep } from 'node:path'
 import { ScoutEnvironmentError } from '@scout-mobile/core'
 
 vi.mock('node:child_process', () => ({
@@ -57,14 +58,14 @@ describe('ReactNativeAdapter', () => {
       // ios/ exists
       mockExistsSync.mockImplementation((p) => {
         const path = String(p)
-        if (path.endsWith('/ios')) return true
+        if (path.endsWith(`${sep}ios`)) return true
         if (path.includes('Debug-iphonesimulator')) return true
         return false
       })
       // workspace found
       mockReaddirSync.mockImplementation((p) => {
         const path = String(p)
-        if (path.endsWith('/ios')) return ['MyApp.xcworkspace', 'Podfile'] as any
+        if (path.endsWith(`${sep}ios`)) return ['MyApp.xcworkspace', 'Podfile'] as any
         if (path.includes('Debug-iphonesimulator')) return ['MyApp.app'] as any
         return [] as any
       })
@@ -91,13 +92,13 @@ describe('ReactNativeAdapter', () => {
     it('uses explicit scheme when provided', async () => {
       mockExistsSync.mockImplementation((p) => {
         const path = String(p)
-        if (path.endsWith('/ios')) return true
+        if (path.endsWith(`${sep}ios`)) return true
         if (path.includes('Debug-iphonesimulator')) return true
         return false
       })
       mockReaddirSync.mockImplementation((p) => {
         const path = String(p)
-        if (path.endsWith('/ios')) return ['MyApp.xcworkspace'] as any
+        if (path.endsWith(`${sep}ios`)) return ['MyApp.xcworkspace'] as any
         if (path.includes('Debug-iphonesimulator')) return ['MyApp.app'] as any
         return [] as any
       })

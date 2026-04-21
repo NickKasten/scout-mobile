@@ -2,6 +2,8 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import type { PlatformAdapter, DeviceInfo, BootResult } from './adapters/PlatformAdapter.js'
 import type { FrameworkAdapter } from './adapters/FrameworkAdapter.js'
+import { loadFlows, findFlow } from './loop/flowLoader.js'
+import { runFlow } from './loop/flowRunner.js'
 
 function formatDimensions(info: DeviceInfo): string {
   if (info.width > 0 && info.height > 0) {
@@ -303,6 +305,59 @@ export function createScoutServer(adapter: PlatformAdapter, framework?: Framewor
           ? lines.join('\n')
           : '(no accessibility elements found)'
         return { content: [{ type: 'text', text }] }
+      } catch (error) {
+        return {
+          content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+          isError: true,
+        }
+      }
+    },
+  )
+
+  server.tool(
+    'simulator_run_flow',
+    'Run a named UI flow from a flows.yaml file. Executes steps sequentially (tap, type, press, swipe, assert) and reports pass/fail results.',
+    {
+      flowName: z.string().describe('Name of the flow to run (must match a flow in flows.yaml)'),
+      flowsPath: z.string().optional().describe('Path to flows.yaml file (default: ./flows.yaml)'),
+    },
+    async ({ flowName, flowsPath }) => {
+      try {
+        const projectRoot = process.cwd()
+        const path = flowsPath ?? './flows.yaml'
+        const flows = loadFlows(path, projectRoot)
+        const flow = findFlow(flows, flowName)
+        const result = await runFlow(adapter, flow)
+
+        const lines: string[] = []
+        lines.push(`Flow: ${result.flowName}`)
+        lines.push(`Result: ${result.success ? 'PASS' : 'FAIL'}`)
+        lines.push(`Duration: ${result.durationMs}ms`)
+        lines.push('')
+
+        for (let i = 0; i < result.steps.length; i++) {
+          const s = result.steps[i]
+          const status = s.success ? '✓' : '✗'
+          const stepDesc = Object.keys(s.step)[0]
+          lines.push(`  ${status} Step ${i + 1}: ${stepDesc} (${s.durationMs}ms)`)
+          if (s.error) {
+            lines.push(`    Error: ${s.error}`)
+          }
+        }
+
+        if (result.issues.length > 0) {
+          lines.push('')
+          lines.push('Issues:')
+          for (const issue of result.issues) {
+            lines.push(`  [${issue.severity.toUpperCase()}] ${issue.message}`)
+            if (issue.suggestedFix) lines.push(`    Fix: ${issue.suggestedFix}`)
+          }
+        }
+
+        return {
+          content: [{ type: 'text', text: lines.join('\n') }],
+          isError: !result.success,
+        }
       } catch (error) {
         return {
           content: [{ type: 'text', text: `Error: ${error instanceof Error ? error.message : String(error)}` }],

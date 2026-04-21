@@ -35,3 +35,8 @@ export {
 export type { Issue, Severity, TestReport } from './report/reportWriter.js'
 export { runTestLoop, analyzeLogLines } from './loop/testLoop.js'
 export type { TestLoopOptions, TestLoopResult } from './loop/testLoop.js'
+export { parseSimpleYaml } from './loop/yamlParser.js'
+export { loadFlows, findFlow } from './loop/flowLoader.js'
+export { runFlow } from './loop/flowRunner.js'
+export { detectJank } from './loop/jankDetector.js'
+export type { FlowDefinition, FlowStep, FlowStepResult, FlowResult } from './loop/flowTypes.js'
