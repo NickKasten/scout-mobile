@@ -1,6 +1,6 @@
 {
   "name": "@scout-mobile/core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP server for AI-driven iOS Simulator control — screenshot, tap, swipe, type, and accessibility inspection",
   "license": "AGPL-3.0",
   "author": "Nicholas Kasten",

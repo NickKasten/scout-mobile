@@ -1,13 +1,13 @@
 # CLAUDE.md — Scout
 
 Scout is a Claude Code MCP plugin for iOS Simulator control.
-**npm:** @scout-mobile | **Phase:** 2 | **Tests:** 143
+**npm:** @scout-mobile | **Phase:** 2 | **Tests:** 201
 
 ## Commands
 
 - `npm ci` — install (CI) / `npm install` (local)
 - `npm run build` — compile TypeScript (per-package via `tsc --build`)
-- `npm run test` — unit tests via Vitest (143 tests, any platform)
+- `npm run test` — unit tests via Vitest (201 tests, any platform)
 - `npm run test:integration` — macOS only, requires Xcode + booted sim
 - `npm audit --audit-level=high` — security audit (blocks on high/critical in CI)
 

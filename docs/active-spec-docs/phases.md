@@ -31,10 +31,10 @@
 - ✅ Bounds checking on `tap()` and `swipe()` coordinates
 - ✅ `simulator_type_text` and `simulator_press_key` tools (idb-based, validated input)
 - ✅ `simulator_accessibility_tree` implementation (idb `describe-all`, structured `AccessibilityTree`)
-- ☐ Flow runner (`simulator_run_flow`, reads `flows.yaml`)
-- ☐ Flow assertions (`assert: { visible: "..." }`)
-- ☐ Performance / jank detection
-- ☐ Integration test suite for `IOSSimulatorAdapter`
+- ✅ Flow runner (`simulator_run_flow`, reads `flows.yaml`)
+- ✅ Flow assertions (`assert: { visible: "..." }`)
+- ✅ Performance / jank detection
+- ✅ Integration test suite for `IOSSimulatorAdapter` (scaffold)
 
 **Done when:** Claude executes a named flow end-to-end and reports across all issue categories.
 

@@ -1,6 +1,6 @@
 {
   "name": "@scout-mobile/framework-rn",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "React Native framework adapter for Scout — Metro bundler and RN-specific inspection",
   "license": "AGPL-3.0",
   "author": "Nicholas Kasten",
@@ -42,6 +42,6 @@
     "access": "public"
   },
   "dependencies": {
-    "@scout-mobile/core": "0.1.0"
+    "@scout-mobile/core": "0.2.0"
   }
 }

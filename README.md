@@ -6,9 +6,9 @@ Scout gives Claude Code eyes and hands inside the iOS Simulator, closing the mob
 
 ## Status
 
-Phase 2 in progress. 13 MCP tools, iOS Simulator + React Native first-class. 143 unit tests passing. Not yet published to npm — install from source.
+Phase 2 complete. 14 MCP tools, iOS Simulator + React Native first-class. 201 unit tests passing.
 
-Phase 0 (PoC) and Phase 1 (MVP loop) are complete. Phase 2 landed device awareness, text input, accessibility tree, UDID targeting, clear text, and tap-by-element. Still ahead in Phase 2: flow runner, flow assertions, perf/jank detection, and the integration test suite. See [`docs/SPEC.md`](docs/SPEC.md) for the full milestone list and design rationale.
+Phase 0 (PoC) and Phase 1 (MVP loop) are complete. Phase 2 added device awareness, text input, accessibility tree, UDID targeting, clear text, tap-by-element, the flow runner with YAML-based assertions, jank detection, and an integration test scaffold. See [`docs/SPEC.md`](docs/SPEC.md) for the full milestone list and design rationale.
 
 ## Requirements
 
@@ -21,7 +21,13 @@ Phase 0 (PoC) and Phase 1 (MVP loop) are complete. Phase 2 landed device awarene
   ```
 - Claude Code (for the MCP client)
 
-## Install (from source)
+## Install
+
+```sh
+npm install @scout-mobile/core @scout-mobile/platform-ios
+```
+
+Or install from source:
 
 ```sh
 git clone https://github.com/<owner>/scout-mobile.git
@@ -67,6 +73,7 @@ Restart Claude Code after editing `.mcp.json` so the new MCP server is picked up
 | `simulator_clear_text` | Clear the focused field (triple-tap select-all + delete, backspace fallback) |
 | `simulator_tap_element` | Tap an element by accessibility label via DFS tree search |
 | `simulator_accessibility_tree` | Fetch the accessibility tree as structured text |
+| `simulator_run_flow` | Run a named UI flow from `flows.yaml` with step-by-step results |
 
 ## Architecture
 
@@ -89,7 +96,7 @@ The monorepo is organized as three npm workspaces under `packages/`:
 ```sh
 npm install       # install workspace deps
 npm run build     # tsc --build across all packages
-npm run test      # vitest run (143 unit tests)
+npm run test      # vitest run (201 unit tests)
 npm run typecheck # tsc --build --noEmit
 ```
 
