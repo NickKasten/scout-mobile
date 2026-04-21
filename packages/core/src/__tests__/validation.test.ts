@@ -10,6 +10,7 @@ import {
   validateDeviceIdentifier,
   validateAccessibilityLabel,
 } from '../validation.js'
+import { resolve } from 'node:path'
 import { ScoutValidationError } from '../errors.js'
 
 describe('validateBundleId', () => {
@@ -64,7 +65,7 @@ describe('validateFlowName', () => {
 describe('safeResolvePath', () => {
   it('resolves valid paths within base dir', () => {
     const result = safeResolvePath('/home/user/project', 'reports/test.png')
-    expect(result).toBe('/home/user/project/reports/test.png')
+    expect(result).toBe(resolve('/home/user/project', 'reports/test.png'))
   })
 
   it('rejects path traversal attempts', () => {

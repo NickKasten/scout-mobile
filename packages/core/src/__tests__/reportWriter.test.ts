@@ -10,6 +10,7 @@ vi.mock('node:fs', () => ({
 }))
 
 import { writeFileSync, readFileSync, appendFileSync, existsSync, mkdirSync } from 'node:fs'
+import { join } from 'node:path'
 import {
   generateReport,
   generateSummary,
@@ -185,7 +186,7 @@ describe('ensureGitignore', () => {
     mockReadFileSync.mockReturnValue('node_modules/\n')
     ensureGitignore('/project', 'scout-reports')
     expect(mockAppendFileSync).toHaveBeenCalledWith(
-      '/project/.gitignore',
+      join('/project', '.gitignore'),
       expect.stringContaining('scout-reports'),
     )
   })
@@ -201,7 +202,7 @@ describe('ensureGitignore', () => {
     mockExistsSync.mockReturnValue(false)
     ensureGitignore('/project', 'scout-reports')
     expect(mockWriteFileSync).toHaveBeenCalledWith(
-      '/project/.gitignore',
+      join('/project', '.gitignore'),
       expect.stringContaining('scout-reports'),
       'utf-8',
     )

@@ -1,5 +1,5 @@
 import { writeFileSync, readFileSync, appendFileSync, existsSync, mkdirSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { join, resolve, sep } from 'node:path'
 
 export type Severity = 'error' | 'warning' | 'info'
 
@@ -104,7 +104,7 @@ export function generateSummary(report: TestReport): string {
 
 export function writeReport(reportDir: string, projectRoot: string, report: TestReport): string {
   const resolvedDir = resolve(projectRoot, reportDir)
-  if (!resolvedDir.startsWith(resolve(projectRoot) + '/')) {
+  if (!resolvedDir.startsWith(resolve(projectRoot) + sep)) {
     throw new Error(`Report directory must be within project root`)
   }
 
