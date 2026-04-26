@@ -1,6 +1,6 @@
 {
   "name": "@scout-mobile/platform-ios",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "iOS Simulator platform adapter for Scout — xcrun simctl and idb integration",
   "license": "AGPL-3.0",
   "author": "Nicholas Kasten",
@@ -44,6 +44,6 @@
     "access": "public"
   },
   "dependencies": {
-    "@scout-mobile/core": "0.2.2"
+    "@scout-mobile/core": "0.2.3"
   }
 }

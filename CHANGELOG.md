@@ -3,6 +3,15 @@
 All notable changes to Scout Mobile are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/). Versioning: [SemVer](https://semver.org/).
 
+## [0.2.3] — 2026-04-26
+
+### Changed
+- Upgrade CI to Node 22 and GitHub Actions v6
+- Require Node 22+ (previously Node 20+)
+
+### Stats
+- 202 unit tests, 14 MCP tools
+
 ## [0.2.0] — 2026-04-21
 
 ### Added
