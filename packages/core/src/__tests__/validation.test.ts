@@ -82,6 +82,12 @@ describe('safeResolvePath', () => {
       ScoutValidationError,
     )
   })
+
+  it('rejects prefix collision attacks', () => {
+    expect(() => safeResolvePath('/home/user/project', '../project-evil/x')).toThrow(
+      ScoutValidationError,
+    )
+  })
 })
 
 describe('validateTextInput', () => {

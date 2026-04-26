@@ -1,4 +1,4 @@
-import { resolve } from 'node:path'
+import { resolve, sep } from 'node:path'
 import { ScoutValidationError } from './errors.js'
 
 const BUNDLE_ID_RE = /^[a-zA-Z0-9\-\.]+$/
@@ -28,7 +28,7 @@ export function validateFlowName(name: string): string {
 
 export function safeResolvePath(baseDir: string, filename: string): string {
   const resolved = resolve(baseDir, filename)
-  if (!resolved.startsWith(resolve(baseDir))) {
+  if (!resolved.startsWith(resolve(baseDir) + sep)) {
     throw new ScoutValidationError(`Path traversal detected: ${filename}`)
   }
   return resolved

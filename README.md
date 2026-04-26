@@ -17,7 +17,8 @@ Phase 0 (PoC) and Phase 1 (MVP loop) are complete. Phase 2 added device awarenes
 - Node 20+
 - [`idb`](https://fbidb.io) — required for tap, swipe, type, key, clear text, tap-by-element, and accessibility tree:
   ```sh
-  brew install facebook/fb/idb-companion
+  brew tap facebook/fb && brew install idb-companion
+  pip3 install fb-idb
   ```
 - Claude Code (for the MCP client)
 
@@ -38,7 +39,7 @@ npm run build
 
 ## Configure with Claude Code
 
-Add Scout to your `.mcp.json` (either at the repo root of the project you're working on or in your Claude Code config), pointing at the built `scout` binary:
+Add Scout to your `.mcp.json` (either at the repo root of the project you're working on or in your Claude Code config), pointing at the built `scout` binary. A `.mcp.json.example` is provided as a starting point:
 
 ```json
 {

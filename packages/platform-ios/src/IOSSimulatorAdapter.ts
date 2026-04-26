@@ -410,6 +410,9 @@ export class IOSSimulatorAdapter implements PlatformAdapter {
       // Derive process name from last component of bundle ID
       const parts = options.bundleId.split('.')
       const processName = parts[parts.length - 1]
+      if (!/^[a-zA-Z0-9_\-]+$/.test(processName)) {
+        throw new ScoutValidationError(`Invalid derived process name: ${processName}`)
+      }
       args.push('--predicate', `process == "${processName}"`)
     }
 
