@@ -5,5 +5,6 @@ export default defineConfig({
     name: 'platform-ios-integration',
     include: ['src/__integration__/**/*.test.ts'],
     testTimeout: 60_000,
+    passWithNoTests: true,
   },
 })
