@@ -28,15 +28,9 @@ jobs:
 
       - name: Publish @scout-mobile/core
         run: npm publish --provenance --access public -w packages/core
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @scout-mobile/platform-ios
         run: npm publish --provenance --access public -w packages/platform-ios
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @scout-mobile/framework-rn
         run: npm publish --provenance --access public -w packages/framework-rn
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
