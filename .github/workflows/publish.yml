@@ -27,7 +27,11 @@ jobs:
       - run: npm audit --audit-level=high
 
       - name: Upgrade npm for OIDC trusted publishing
-        run: npm install -g npm@11
+        run: |
+          TARBALL=$(npm view npm@11 dist.tarball)
+          curl -fsSL "$TARBALL" | tar xz -C /tmp
+          node /tmp/package/bin/npm-cli.js install -g npm@11
+          rm -rf /tmp/package
 
       - name: Publish @scout-mobile/core
         run: npm publish --provenance --access public -w packages/core
