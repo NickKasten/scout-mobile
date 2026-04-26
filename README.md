@@ -6,7 +6,7 @@ Scout gives Claude Code eyes and hands inside the iOS Simulator, closing the mob
 
 ## Status
 
-Phase 2 complete. 14 MCP tools, iOS Simulator + React Native first-class. 201 unit tests passing.
+Phase 2 complete. 14 MCP tools, iOS Simulator + React Native first-class. 202 unit tests passing.
 
 Phase 0 (PoC) and Phase 1 (MVP loop) are complete. Phase 2 added device awareness, text input, accessibility tree, UDID targeting, clear text, tap-by-element, the flow runner with YAML-based assertions, jank detection, and an integration test scaffold. See [`docs/SPEC.md`](docs/SPEC.md) for the full milestone list and design rationale.
 
@@ -14,7 +14,7 @@ Phase 0 (PoC) and Phase 1 (MVP loop) are complete. Phase 2 added device awarenes
 
 - macOS (the iOS adapter shells out to `xcrun simctl`)
 - Xcode + Xcode Command Line Tools (`xcode-select --install`)
-- Node 20+
+- Node 22+
 - [`idb`](https://fbidb.io) — required for tap, swipe, type, key, clear text, tap-by-element, and accessibility tree:
   ```sh
   brew tap facebook/fb && brew install idb-companion
@@ -97,7 +97,7 @@ The monorepo is organized as three npm workspaces under `packages/`:
 ```sh
 npm install       # install workspace deps
 npm run build     # tsc --build across all packages
-npm run test      # vitest run (201 unit tests)
+npm run test      # vitest run (202 unit tests)
 npm run typecheck # tsc --build --noEmit
 ```
 
