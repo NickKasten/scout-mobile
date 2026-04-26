@@ -43,7 +43,7 @@ jobs:
       - name: Install idb
         run: |
           brew tap facebook/fb && brew install idb-companion
-          pip3 install fb-idb
+          brew install pipx && pipx install fb-idb
 
       - run: npm ci
       - run: npm run build
