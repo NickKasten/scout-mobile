@@ -42,6 +42,10 @@ These are settled. If you think one needs revisiting, flag it as a comment; don'
 - **Zero runtime dependencies for `@scout-mobile/core`** — `@modelcontextprotocol/sdk` is the one exception
 - **All releases via GitHub Actions only** — no local `npm publish`
 
+## Workflow
+
+- After completing a development plan and verifying tests pass, stage, commit, and push the changes.
+
 ## Security Essentials
 
 - Shell: `execFileSync(cmd, [args])` always — never string interpolation
