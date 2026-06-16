@@ -44,7 +44,20 @@ export interface LogStreamOptions {
   processName?: string
 }
 
+/**
+ * Optional metadata describing a platform adapter, used by the MCP server to
+ * generate platform-accurate tool descriptions without hardcoding iOS/Android
+ * specifics. Optional + readonly so existing adapters need no changes; the
+ * server falls back to neutral defaults when absent.
+ */
+export interface AdapterMeta {
+  displayName: string          // e.g. "iOS Simulator" | "Android Emulator"
+  installArtifact: string      // e.g. ".app bundle" | ".apk"
+  gestureToolingNote?: string  // e.g. "requires idb" | "" (Android needs none)
+}
+
 export interface PlatformAdapter {
+  readonly meta?: AdapterMeta
   checkEnvironment(): Promise<EnvironmentReport>
   boot(device?: string): Promise<BootResult>
   install(appPath: string): Promise<void>

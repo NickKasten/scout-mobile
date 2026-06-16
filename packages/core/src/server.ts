@@ -1,9 +1,15 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import type { PlatformAdapter, DeviceInfo, BootResult } from './adapters/PlatformAdapter.js'
+import type { PlatformAdapter, AdapterMeta, DeviceInfo, BootResult } from './adapters/PlatformAdapter.js'
 import type { FrameworkAdapter } from './adapters/FrameworkAdapter.js'
 import { loadFlows, findFlow } from './loop/flowLoader.js'
 import { runFlow } from './loop/flowRunner.js'
+
+const DEFAULT_META: AdapterMeta = {
+  displayName: 'device',
+  installArtifact: 'app bundle',
+  gestureToolingNote: '',
+}
 
 function formatDimensions(info: DeviceInfo): string {
   if (info.width > 0 && info.height > 0) {
@@ -12,18 +18,45 @@ function formatDimensions(info: DeviceInfo): string {
   return ' (unknown dimensions)'
 }
 
+/**
+ * Append a parenthetical tooling note (e.g. "requires idb") when the adapter
+ * declares one. Returns the base text unchanged when there is no note.
+ */
+function withTooling(base: string, meta: AdapterMeta): string {
+  return meta.gestureToolingNote ? `${base} (${meta.gestureToolingNote})` : base
+}
+
 export function createScoutServer(adapter: PlatformAdapter, framework?: FrameworkAdapter): McpServer {
   const server = new McpServer({
     name: 'scout',
     version: '0.0.1',
   })
 
+  const meta: AdapterMeta = adapter.meta ?? DEFAULT_META
+
+  /**
+   * Register a tool under its canonical `device_*` name and a deprecated
+   * `simulator_*` alias that shares the same schema and handler. The alias keeps
+   * existing `.mcp.json` configs and early adopters working.
+   */
+  const registerDual = (
+    canonical: string,
+    alias: string,
+    description: string,
+    schema: Record<string, z.ZodType>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    handler: (args: any) => Promise<any>,
+  ): void => {
+    server.tool(canonical, description, schema, handler)
+    server.tool(alias, `[DEPRECATED alias for ${canonical}] ${description}`, schema, handler)
+  }
+
   // Track device info for enriching responses
   let lastDeviceInfo: DeviceInfo | undefined
 
   server.tool(
     'scout_check_environment',
-    'Check if the current environment has the required tools (Xcode, simctl, etc.) to run Scout',
+    `Check if the current environment has the required tools to run Scout (${meta.displayName})`,
     {},
     async () => {
       try {
@@ -44,21 +77,22 @@ export function createScoutServer(adapter: PlatformAdapter, framework?: Framewor
     },
   )
 
-  server.tool(
+  registerDual(
+    'device_boot',
     'simulator_boot',
-    'Boot an iOS Simulator device. Defaults to iPhone 17 Pro if no device name is specified.',
-    { device: z.string().optional().describe('Simulator device name (e.g. "iPhone 17 Pro") or UDID') },
+    `Boot a ${meta.displayName} device. Defaults to the standard device if none is specified.`,
+    { device: z.string().optional().describe('Device name or identifier (e.g. "iPhone 17 Pro" / "Pixel_Fold_API_35")') },
     async ({ device }) => {
       try {
         const result: BootResult = await adapter.boot(device)
         lastDeviceInfo = result
         const dims = formatDimensions(result)
-        const lines = [`Simulator booted: ${result.name}${dims}`, `UDID: ${result.udid}`]
+        const lines = [`${meta.displayName} booted: ${result.name}${dims}`, `UDID: ${result.udid}`]
         if (result.warnings && result.warnings.length > 0) {
           for (const warning of result.warnings) {
             lines.push(`⚠️ ${warning}`)
           }
-          lines.push('Tip: Use the UDID above with simulator_boot to always target this specific device.')
+          lines.push('Tip: Use the UDID above with device_boot to always target this specific device.')
         }
         return { content: [{ type: 'text', text: lines.join('\n') }] }
       } catch (error) {
@@ -70,9 +104,10 @@ export function createScoutServer(adapter: PlatformAdapter, framework?: Framewor
     },
   )
 
-  server.tool(
+  registerDual(
+    'device_screenshot',
     'simulator_screenshot',
-    'Take a screenshot of the currently booted iOS Simulator',
+    `Take a screenshot of the currently booted ${meta.displayName}`,
     {
       delayMs: z.number().min(0).max(5000).optional().describe('Delay in milliseconds before capturing (0-5000)'),
     },
@@ -99,10 +134,11 @@ export function createScoutServer(adapter: PlatformAdapter, framework?: Framewor
     },
   )
 
-  server.tool(
+  registerDual(
+    'device_install',
     'simulator_install',
-    'Install an app bundle (.app) on the currently booted iOS Simulator',
-    { bundlePath: z.string().describe('Path to the .app bundle to install') },
+    `Install an app (${meta.installArtifact}) on the currently booted ${meta.displayName}`,
+    { bundlePath: z.string().describe(`Path to the ${meta.installArtifact} to install`) },
     async ({ bundlePath }) => {
       try {
         await adapter.install(bundlePath)
@@ -116,10 +152,11 @@ export function createScoutServer(adapter: PlatformAdapter, framework?: Framewor
     },
   )
 
-  server.tool(
+  registerDual(
+    'device_launch',
     'simulator_launch',
-    'Launch an installed app on the currently booted iOS Simulator by bundle ID',
-    { bundleId: z.string().describe('Bundle identifier (e.g. "com.example.app")') },
+    `Launch an installed app on the currently booted ${meta.displayName} by bundle ID`,
+    { bundleId: z.string().describe('Bundle/package identifier (e.g. "com.example.app")') },
     async ({ bundleId }) => {
       try {
         await adapter.launch(bundleId)
@@ -133,9 +170,10 @@ export function createScoutServer(adapter: PlatformAdapter, framework?: Framewor
     },
   )
 
-  server.tool(
+  registerDual(
+    'device_tap',
     'simulator_tap',
-    'Tap a point on the iOS Simulator screen (requires idb)',
+    withTooling(`Tap a point on the ${meta.displayName} screen`, meta),
     {
       x: z.number().describe('X coordinate'),
       y: z.number().describe('Y coordinate'),
@@ -153,9 +191,10 @@ export function createScoutServer(adapter: PlatformAdapter, framework?: Framewor
     },
   )
 
-  server.tool(
+  registerDual(
+    'device_swipe',
     'simulator_swipe',
-    'Swipe on the iOS Simulator screen from one point to another (requires idb)',
+    withTooling(`Swipe on the ${meta.displayName} screen from one point to another`, meta),
     {
       startX: z.number().describe('Start X coordinate'),
       startY: z.number().describe('Start Y coordinate'),
@@ -175,12 +214,13 @@ export function createScoutServer(adapter: PlatformAdapter, framework?: Framewor
     },
   )
 
-  server.tool(
+  registerDual(
+    'device_log_stream',
     'simulator_log_stream',
-    'Capture system logs from the booted iOS Simulator for a specified duration',
+    `Capture system logs from the booted ${meta.displayName} for a specified duration`,
     {
       seconds: z.number().min(1).max(30).describe('Duration in seconds to capture logs (1-30)'),
-      bundleId: z.string().optional().describe('Filter logs to this bundle ID (e.g. "com.example.app")'),
+      bundleId: z.string().optional().describe('Filter logs to this bundle/package ID (e.g. "com.example.app")'),
       processName: z.string().optional().describe('Filter logs to this process name'),
     },
     async ({ seconds, bundleId, processName }) => {
@@ -208,9 +248,10 @@ export function createScoutServer(adapter: PlatformAdapter, framework?: Framewor
     },
   )
 
-  server.tool(
+  registerDual(
+    'device_type_text',
     'simulator_type_text',
-    'Type text into the currently focused field on the iOS Simulator (requires idb)',
+    withTooling(`Type text into the currently focused field on the ${meta.displayName}`, meta),
     {
       text: z.string().describe('Text to type into the focused field'),
     },
@@ -227,9 +268,10 @@ export function createScoutServer(adapter: PlatformAdapter, framework?: Framewor
     },
   )
 
-  server.tool(
+  registerDual(
+    'device_press_key',
     'simulator_press_key',
-    'Press a key on the iOS Simulator (requires idb). Allowed keys: return, tab, space, deleteBackspace, delete, escape, upArrow, downArrow, leftArrow, rightArrow, home, end, pageUp, pageDown',
+    withTooling(`Press a key on the ${meta.displayName}. Allowed keys: return, tab, space, deleteBackspace, delete, escape, upArrow, downArrow, leftArrow, rightArrow, home, end, pageUp, pageDown`, meta),
     {
       key: z.string().describe('Key name (e.g. "return", "tab", "deleteBackspace")'),
     },
@@ -246,9 +288,10 @@ export function createScoutServer(adapter: PlatformAdapter, framework?: Framewor
     },
   )
 
-  server.tool(
+  registerDual(
+    'device_clear_text',
     'simulator_clear_text',
-    'Clear text from the currently focused field on the iOS Simulator (requires idb). Attempts to select-all and delete; falls back to repeated backspace.',
+    withTooling(`Clear text from the currently focused field on the ${meta.displayName}. Attempts to select-all and delete; falls back to repeated backspace.`, meta),
     {},
     async () => {
       try {
@@ -263,9 +306,10 @@ export function createScoutServer(adapter: PlatformAdapter, framework?: Framewor
     },
   )
 
-  server.tool(
+  registerDual(
+    'device_tap_element',
     'simulator_tap_element',
-    'Tap an element by its accessibility label on the iOS Simulator (requires idb). Finds the element in the accessibility tree and taps its center.',
+    withTooling(`Tap an element by its accessibility label on the ${meta.displayName}. Finds the element in the accessibility tree and taps its center.`, meta),
     {
       label: z.string().describe('Accessibility label of the element to tap'),
     },
@@ -289,9 +333,10 @@ export function createScoutServer(adapter: PlatformAdapter, framework?: Framewor
     },
   )
 
-  server.tool(
+  registerDual(
+    'device_accessibility_tree',
     'simulator_accessibility_tree',
-    'Get the accessibility tree of the currently displayed screen on the iOS Simulator (requires idb). Returns element types, names, values, and positions.',
+    withTooling(`Get the accessibility tree of the currently displayed screen on the ${meta.displayName}. Returns element types, names, values, and positions.`, meta),
     {},
     async () => {
       try {
@@ -314,7 +359,8 @@ export function createScoutServer(adapter: PlatformAdapter, framework?: Framewor
     },
   )
 
-  server.tool(
+  registerDual(
+    'device_run_flow',
     'simulator_run_flow',
     'Run a named UI flow from a flows.yaml file. Executes steps sequentially (tap, type, press, swipe, assert) and reports pass/fail results.',
     {

@@ -3,7 +3,7 @@ import { readFileSync, mkdtempSync, rmSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { createInterface } from 'node:readline'
-import type { PlatformAdapter, EnvironmentReport, Point, DeviceInfo, BootResult, AccessibilityTree, AccessibilityElement, LogStreamOptions } from '@scout-mobile/core'
+import type { PlatformAdapter, AdapterMeta, EnvironmentReport, Point, DeviceInfo, BootResult, AccessibilityTree, AccessibilityElement, LogStreamOptions } from '@scout-mobile/core'
 import { ScoutEnvironmentError, ScoutValidationError, validateBundleId, validateDeviceName, validateTextInput, validateKeyName, isUdid, validateAccessibilityLabel } from '@scout-mobile/core'
 import { assertMacOS, assertIdbInstalled, runAllChecks } from './envChecks.js'
 import { lookupDimensions } from './deviceDimensions.js'
@@ -187,6 +187,12 @@ function findElementByLabel(elements: AccessibilityElement[], label: string): Ac
 
 export class IOSSimulatorAdapter implements PlatformAdapter {
   private deviceInfo: DeviceInfo | undefined
+
+  readonly meta: AdapterMeta = {
+    displayName: 'iOS Simulator',
+    installArtifact: '.app bundle',
+    gestureToolingNote: 'requires idb',
+  }
 
   getDeviceInfo(): DeviceInfo | undefined {
     return this.deviceInfo

@@ -12,6 +12,7 @@ export {
 } from './validation.js'
 export type {
   PlatformAdapter,
+  AdapterMeta,
   EnvironmentReport,
   EnvironmentCheck,
   Point,
