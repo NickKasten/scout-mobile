@@ -1,8 +1,15 @@
 # Scout — Next Steps & Cross-Platform Testing Plan
 
-Status snapshot: Phase 2 complete, v0.2.3, 202 unit tests, 14 MCP tools, iOS + RN only.
-Goal: move into Phase 2+ so Android (and iOS where possible) is available to both
-macOS and Windows/Linux users, and prove it works on Windows without owning a Windows machine.
+Status snapshot: **Phase 2+ complete, v0.3.0, 336 unit tests, 27 MCP tools
+(`device_*` + `simulator_*` alias), iOS + Android + RN.** Android (via the
+`@scout-mobile/platform-android` adapter) now runs on macOS, Windows, and Linux;
+Windows behavior is proven via unit tests, Windows `pack:check` in CI, and the
+manual [`manual-test-windows.md`](manual-test-windows.md) script. The original
+goal below has been delivered.
+
+Goal (delivered): move into Phase 2+ so Android (and iOS where possible) is
+available to both macOS and Windows/Linux users, and prove it works on Windows
+without owning a Windows machine.
 
 ---
 

@@ -3,15 +3,15 @@
 > **Package:** `@scout-mobile/core`
 > **License:** AGPL-3.0
 > **Author:** Nicholas Kasten
-> **Status:** Phase 2 — Active Development
+> **Status:** Phase 2+ — Active Development
 
 ---
 
 ## Overview
 
-Scout is a Claude Code MCP plugin that closes the iOS Simulator iteration loop for React Native developers on macOS. It gives Claude Code the ability to boot a simulator, install and launch an app, interact with the UI, observe runtime state, and surface errors — all without leaving the editor.
+Scout is a Claude Code MCP plugin that closes the mobile iteration loop for React Native developers. It gives Claude Code the ability to boot an iOS Simulator (macOS) or Android Emulator (macOS, Windows, Linux), install and launch an app, interact with the UI, observe runtime state, and surface errors — all without leaving the editor.
 
-> *iOS Simulator iteration loop for Claude Code — for React Native and beyond.*
+> *Mobile simulator/emulator iteration loop for Claude Code — iOS and Android, for React Native and beyond.*
 
 ---
 
@@ -23,7 +23,7 @@ Scout is a Claude Code MCP plugin that closes the iOS Simulator iteration loop f
 - Extensible from day one: iOS + React Native are the first implementation, not the architecture
 - Proper open source npm package usable by the wider React Native / Claude Code community
 
-**Non-goals (v1):** Android, Flutter/Expo/SwiftUI, CI/CD integration, remote device testing
+**Non-goals (v1):** Flutter/Expo/SwiftUI, CI/CD integration, remote device testing. *(Android landed in Phase 2+.)*
 
 ---
 
@@ -47,10 +47,11 @@ Scout is a Claude Code MCP plugin that closes the iOS Simulator iteration loop f
 |---|---|
 | Language | TypeScript |
 | MCP SDK | `@modelcontextprotocol/sdk` |
-| Simulator control | `xcrun simctl` |
-| Gestures + a11y tree | `idb` (Meta iOS Device Bridge) |
+| iOS control | `xcrun simctl` |
+| iOS gestures + a11y tree | `idb` (Meta iOS Device Bridge) |
+| Android control + a11y tree | `adb`, `emulator`, `uiautomator` |
 | Shell execution | `execFileSync` / `spawnSync` — never `exec` with string interpolation |
-| RN build | `npx react-native run-ios` |
+| RN build | `xcodebuild` (iOS) / `gradlew assembleDebug` (Android) |
 | Log streaming | `xcrun simctl spawn booted log stream` |
 | Test runner | Vitest |
 | Monorepo | npm workspaces |

@@ -1,6 +1,6 @@
 # Scout — Build Phases & Distribution
 
-## Current Status: Phase 2 — Full Interaction Loop
+## Current Status: Phase 2+ — Cross-Platform (Android + adapter-neutral server)
 
 ---
 
@@ -26,17 +26,29 @@
 
 ---
 
-## Phase 2 — Full Interaction Loop ← *current*
+## Phase 2 — Full Interaction Loop ✅
 - ✅ Device dimension awareness at boot (static lookup table, `DeviceInfo` return type)
 - ✅ Bounds checking on `tap()` and `swipe()` coordinates
-- ✅ `simulator_type_text` and `simulator_press_key` tools (idb-based, validated input)
-- ✅ `simulator_accessibility_tree` implementation (idb `describe-all`, structured `AccessibilityTree`)
-- ✅ Flow runner (`simulator_run_flow`, reads `flows.yaml`)
+- ✅ `type_text` and `press_key` tools (idb-based, validated input)
+- ✅ `accessibility_tree` implementation (idb `describe-all`, structured `AccessibilityTree`)
+- ✅ Flow runner (`run_flow`, reads `flows.yaml`)
 - ✅ Flow assertions (`assert: { visible: "..." }`)
 - ✅ Performance / jank detection
 - ✅ Integration test suite for `IOSSimulatorAdapter` (scaffold)
 
-**Done when:** Claude executes a named flow end-to-end and reports across all issue categories.
+**Done when:** Claude executes a named flow end-to-end and reports across all issue categories. ✅
+
+---
+
+## Phase 2+ — Cross-Platform (Android + adapter-neutral server) ← *current*
+- ✅ Adapter-neutral MCP server: canonical `device_*` tool names with `simulator_*` deprecated aliases (27 tools total), descriptions driven by an optional `AdapterMeta`
+- ✅ `@scout-mobile/platform-android` — `AndroidEmulatorAdapter` (`adb` + `emulator` + `uiautomator`), runs on macOS/Windows/Linux with no OS gate
+- ✅ Android env checks, dynamic device dimensions (`adb shell wm size`), dependency-free uiautomator XML parser, physical-pixel coordinates
+- ✅ React Native Android build path (`gradlew assembleDebug` / `gradlew.bat`)
+- ✅ Target selection in the bin via `resolveTarget(env, osPlatform)` + friendly missing-package install message
+- ✅ Cross-platform tests (iOS throws off macOS; Android env across OSes; path traversal), Windows `pack:check` + Ubuntu Android emulator CI, manual Windows test guide
+
+**Done when:** Claude drives an Android emulator end-to-end on a non-macOS host. ✅
 
 ---
 

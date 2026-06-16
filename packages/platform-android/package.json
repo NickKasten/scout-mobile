@@ -1,6 +1,6 @@
 {
   "name": "@scout-mobile/platform-android",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "Android Emulator platform adapter for Scout — adb, emulator, and uiautomator integration",
   "license": "AGPL-3.0",
   "author": "Nicholas Kasten",
@@ -44,6 +44,6 @@
     "access": "public"
   },
   "dependencies": {
-    "@scout-mobile/core": "0.2.3"
+    "@scout-mobile/core": "0.3.0"
   }
 }

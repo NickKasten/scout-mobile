@@ -2,7 +2,11 @@
   "mcpServers": {
     "scout": {
       "command": "node",
-      "args": ["./packages/core/bin/scout.mjs"]
+      "args": ["./packages/core/bin/scout.mjs"],
+      "env": {
+        "SCOUT_TARGET": "ios",
+        "SCOUT_BUNDLE_ID": "com.yourapp.bundle"
+      }
     }
   }
 }

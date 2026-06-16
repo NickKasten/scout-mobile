@@ -1,15 +1,27 @@
 # CLAUDE.md — Scout
 
-Scout is a Claude Code MCP plugin for iOS Simulator control.
-**npm:** @scout-mobile | **Phase:** 2 | **Tests:** 202
+Scout is a Claude Code MCP plugin for mobile simulator/emulator control:
+iOS Simulator (macOS) and Android Emulator (macOS, Windows, Linux).
+**npm:** @scout-mobile | **Phase:** 2+ | **Tests:** 336 | **MCP tools:** 27 (13 `device_*` canonical + 13 `simulator_*` deprecated aliases + `scout_check_environment`)
 
 ## Commands
 
 - `npm ci` — install (CI) / `npm install` (local)
 - `npm run build` — compile TypeScript (per-package via `tsc --build`)
-- `npm run test` — unit tests via Vitest (202 tests, any platform)
-- `npm run test:integration` — macOS only, requires Xcode + booted sim
+- `npm run test` — unit tests via Vitest (336 tests, any platform)
+- `npm run test:integration` — runs both iOS + Android integration suites
+- `npm run test:integration:ios` — macOS only, requires Xcode + booted sim
+- `npm run test:integration:android` — requires adb + a booted emulator (self-skips otherwise)
 - `npm audit --audit-level=high` — security audit (blocks on high/critical in CI)
+
+## Target selection
+
+The bin (`packages/core/bin/scout.mjs`) picks one platform package via
+`resolveTarget(env, osPlatform)`: `SCOUT_TARGET` (`ios`|`android`) wins, else
+macOS → iOS and every other OS → Android. Only the needed platform package is
+lazy-loaded; if it's missing, a friendly `npm install` message prints (no stack
+trace). Existing Mac users with no `SCOUT_TARGET` are unaffected (default iOS).
+Android coordinates are **physical pixels**; iOS uses logical points.
 
 ## Context Loading Guide
 
@@ -33,7 +45,10 @@ These are settled. If you think one needs revisiting, flag it as a comment; don'
 - **Monorepo with npm workspaces**, `packages/` directory structure
 - **`PlatformAdapter` × `FrameworkAdapter` dual-interface composition** — the core architectural pattern
 - **`xcrun simctl` for iOS control, `idb` for gestures and accessibility tree**
-- **OS detection is per-adapter, not a global gate** — Android adapter can run on Windows/Linux
+- **`adb` + `emulator` for Android control, `uiautomator` for the accessibility tree**
+- **OS detection is per-adapter, not a global gate** — Android adapter runs on Windows/Linux/macOS; iOS adapter throws a clean error off macOS
+- **Tool naming: `device_*` is canonical, `simulator_*` is a deprecated alias** — both registered, same handlers, kept for backward compatibility
+- **Android coordinates are physical pixels; iOS coordinates are logical points**
 - **`execFileSync` with args array always** — never `execSync` with string interpolation
 - **`flows.yaml` supports both element names and coordinates** — element names preferred, coordinates are the fallback
 - **Layout detection is heuristics-only for v1** — baseline screenshot diffing deferred to Phase 3

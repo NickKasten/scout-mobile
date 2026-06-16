@@ -2,22 +2,36 @@
 
 ## MCP Tool Surface
 
-| Tool | Parameters | Returns | Notes |
-|---|---|---|---|
-| `scout_check_environment` | — | `EnvironmentReport` | Run before any simulator interaction |
-| `simulator_boot` | `device?: string` | `DeviceInfo` | Returns UDID, name, logical dimensions |
-| `simulator_install` | `bundlePath: string` | `void` | |
-| `simulator_launch` | `bundleId: string` | `void` | |
-| `simulator_screenshot` | — | `string` (base64) + dimensions | PNG + device coordinate space |
-| `simulator_tap` | `x: number, y: number` | `void` | Bounds-checked against device dimensions |
-| `simulator_swipe` | `startX, startY, endX, endY` | `void` | Bounds-checked |
-| `simulator_log_stream` | `seconds: number` | `string[]` | Metro + system logs |
-| `simulator_type_text` | `text: string` | `void` | idb required |
-| `simulator_press_key` | `key: string` | `void` | idb required, allowlisted key names |
-| `simulator_accessibility_tree` | — | `AccessibilityTree` | idb required, element names + frames |
-| `simulator_run_flow` | `flowName: string` | `FlowResult` | Reads `flows.yaml` (Phase 3) |
+Scout registers **27 tools**: `scout_check_environment` plus 13 operations, each
+registered twice — a canonical `device_*` name and a `simulator_*` **deprecated
+alias** (same handler, kept for backward compatibility). The table lists the
+canonical names; the alias is the same name with `device_` → `simulator_`.
 
-`scout_check_environment` example output:
+Tool **descriptions** adapt to the active platform via the adapter's optional
+`AdapterMeta` (`displayName`, `installArtifact`, `gestureToolingNote`) — e.g.
+install accepts a `.app bundle` on iOS and an `.apk` on Android. The server
+falls back to neutral defaults when `meta` is absent.
+
+Coordinates are **logical points** on iOS and **physical pixels** on Android.
+
+| Tool (canonical) | Parameters | Returns | Notes |
+|---|---|---|---|
+| `scout_check_environment` | — | `EnvironmentReport` | Single-registered (no alias). Run before any device interaction |
+| `device_boot` | `device?: string` | `DeviceInfo` | iOS: name/UDID; Android: AVD name/serial. Returns dimensions |
+| `device_install` | `bundlePath: string` | `void` | `.app` (iOS) / `.apk` (Android) |
+| `device_launch` | `bundleId: string` | `void` | |
+| `device_screenshot` | `delayMs?: number` | `string` (base64) + dimensions | PNG + device coordinate space |
+| `device_tap` | `x: number, y: number` | `void` | Bounds-checked against device dimensions |
+| `device_swipe` | `startX, startY, endX, endY` | `void` | Bounds-checked |
+| `device_log_stream` | `seconds: number` | `string[]` | iOS system logs / Android logcat |
+| `device_type_text` | `text: string` | `void` | iOS needs idb; Android via `adb shell input` |
+| `device_press_key` | `key: string` | `void` | Allowlisted key names (mapped per platform) |
+| `device_clear_text` | — | `void` | Tree-driven delete with fallback |
+| `device_tap_element` | `label: string` | `void` | DFS accessibility-tree search → center tap |
+| `device_accessibility_tree` | — | `AccessibilityTree` | iOS: idb; Android: `uiautomator dump` |
+| `device_run_flow` | `flowName: string` | `FlowResult` | Reads `flows.yaml` |
+
+`scout_check_environment` example output (iOS):
 ```
 Scout Environment Check
   ✅ macOS 15.2 (Sequoia)
@@ -25,6 +39,15 @@ Scout Environment Check
   ✅ idb 1.1.7
   ❌ React Native project not detected in working directory
      → Expected: package.json with react-native dependency
+```
+
+Example output (Android, any OS):
+```
+Scout Environment Check
+  ✅ Android SDK found at /Users/me/Library/Android/sdk
+  ✅ adb available
+  ✅ emulator available
+  ✅ 1 AVD(s) available: Pixel_Fold_API_35
 ```
 
 ---

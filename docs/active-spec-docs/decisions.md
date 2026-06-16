@@ -62,3 +62,41 @@ Scout: added .claude/mobile-reports/ to .gitignore to prevent report bloat.
 ```
 
 Same pattern as Next.js (`.next/`), Vercel, and similar tools. Transparent and searchable.
+
+---
+
+## 5.6 Adapter-neutral tool naming: `device_*` canonical, `simulator_*` deprecated alias
+
+**Decision: register every operation under a canonical `device_*` name and a `simulator_*` alias.**
+
+Phase 2+ generalizes Scout beyond iOS, so the iOS-flavored `simulator_*` names no
+longer fit Android. Rather than rename (a breaking change for existing `.mcp.json`
+setups and flows), each handler is registered twice: the canonical `device_*` name
+and the `simulator_*` alias (description prefixed `[DEPRECATED alias for …]`). Same
+handler, same zod schema. `scout_check_environment` stays single-registered. Tool
+descriptions are rebuilt from the adapter's optional `AdapterMeta` so they read
+correctly per platform (`.apk` vs `.app bundle`, idb note vs none).
+
+---
+
+## 5.7 Android coordinates: physical pixels
+
+**Decision: Android tap/swipe coordinates are physical pixels; iOS stays logical points.**
+
+`adb input tap/swipe` operates in physical device pixels natively, and
+`uiautomator` bounds are reported in pixels too — so using pixels avoids a
+lossy conversion and matches what the tooling expects. iOS keeps logical points
+(what `idb` uses). The divergence is documented in the tool descriptions and
+README so flow authors know which space a given platform's coordinates live in.
+
+---
+
+## 5.8 Install model: dependency-free core + per-target platform package
+
+**Decision: `@scout-mobile/core` stays dependency-free; the bin lazy-loads only the selected platform package.**
+
+`SCOUT_TARGET` (or the OS default) selects the target, and the bin imports only
+that platform package. If it isn't installed, Scout prints a friendly,
+copy-pasteable `npm install` message and exits cleanly — no stack trace. This
+keeps core lean, lets users install just the platform(s) they need, and leaves
+existing Mac users (who already have `platform-ios`) unaffected.

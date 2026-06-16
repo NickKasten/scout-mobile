@@ -8,8 +8,8 @@ Scout separates *how to control the runtime environment* from *how to build the 
 PlatformAdapter  ×  FrameworkAdapter
 ─────────────────────────────────────
 ios-simulator    ×  react-native     ← v1
-android-emulator ×  flutter          ← Phase 2
-web              ×  expo             ← Phase 3
+android-emulator ×  react-native     ← Phase 2+ (done)
+web              ×  flutter / expo   ← future
 ```
 
 ---
@@ -37,7 +37,15 @@ interface AccessibilityTree {
   raw: string                     // full JSON for debugging
 }
 
+interface AdapterMeta {
+  displayName: string          // "iOS Simulator" | "Android Emulator"
+  installArtifact: string      // ".app bundle" | ".apk"
+  gestureToolingNote?: string  // "requires idb" | "" (Android)
+}
+
 interface PlatformAdapter {
+  readonly meta?: AdapterMeta   // optional + readonly → no breakage for implementers;
+                                // drives platform-neutral MCP tool descriptions
   checkEnvironment(): Promise<EnvironmentReport>
   boot(device?: string): Promise<DeviceInfo>
   install(artifactPath: string): Promise<void>
@@ -64,12 +72,17 @@ interface FrameworkAdapter {
 ## npm Package Structure
 
 ```
-@scout-mobile/core             ← interfaces, loop logic, report writer, MCP server entry
+@scout-mobile/core             ← interfaces, loop logic, report writer, neutral MCP server, resolveTarget
 @scout-mobile/platform-ios     ← IOSSimulatorAdapter (simctl + idb)
-@scout-mobile/platform-android ← AndroidEmulatorAdapter [Phase 2]
-@scout-mobile/framework-rn     ← ReactNativeAdapter
-@scout-mobile/framework-flutter← FlutterAdapter [Phase 2]
+@scout-mobile/platform-android ← AndroidEmulatorAdapter (adb + emulator + uiautomator) [Phase 2+, done]
+@scout-mobile/framework-rn     ← ReactNativeAdapter (xcodebuild + gradlew)
+@scout-mobile/framework-flutter← FlutterAdapter [future]
 ```
+
+The bin (`packages/core/bin/scout.mjs`) calls `resolveTarget(env, osPlatform)`
+to pick exactly one platform package, then lazy-loads it. `SCOUT_TARGET` wins;
+otherwise macOS → iOS, every other OS → Android. A missing platform package
+yields a friendly `npm install` message instead of a stack trace.
 
 ---
 
@@ -89,7 +102,10 @@ scout-mobile/
 │   │   │   ├── report/
 │   │   │   │   └── reportWriter.ts
 │   │   │   ├── validation.ts
+│   │   │   ├── server.ts            ← adapter-neutral; registers device_*/simulator_*
+│   │   │   ├── targetSelection.ts   ← resolveTarget(env, osPlatform)
 │   │   │   └── index.ts
+│   │   ├── bin/scout.mjs            ← target selection + lazy platform load
 │   │   └── package.json
 │   ├── platform-ios/
 │   │   ├── src/
@@ -98,9 +114,18 @@ scout-mobile/
 │   │   │   └── __integration__/
 │   │   │       └── IOSSimulatorAdapter.integration.test.ts
 │   │   └── package.json
+│   ├── platform-android/
+│   │   ├── src/
+│   │   │   ├── AndroidEmulatorAdapter.ts
+│   │   │   ├── envChecks.ts
+│   │   │   ├── deviceDimensions.ts
+│   │   │   ├── accessibilityParser.ts
+│   │   │   └── __integration__/
+│   │   │       └── AndroidEmulatorAdapter.integration.test.ts
+│   │   └── package.json
 │   └── framework-rn/
 │       ├── src/
-│       │   └── ReactNativeAdapter.ts
+│       │   └── ReactNativeAdapter.ts   ← xcodebuild (iOS) / gradlew (Android)
 │       └── package.json
 ├── .github/
 │   ├── workflows/
@@ -162,6 +187,6 @@ These checks run once at adapter initialization via `scout_check_environment`.
 | Adapter | macOS | Windows | Linux |
 |---|---|---|---|
 | `platform-ios` | ✅ | ❌ clear error message | ❌ clear error message |
-| `platform-android` *(Phase 2)* | ✅ | ✅ | ✅ |
+| `platform-android` | ✅ | ✅ | ✅ |
 | `framework-rn` | ✅ | ✅ | ✅ |
-| `framework-flutter` *(Phase 2)* | ✅ | ✅ | ✅ |
+| `framework-flutter` *(future)* | ✅ | ✅ | ✅ |
