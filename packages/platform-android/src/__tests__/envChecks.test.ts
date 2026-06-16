@@ -16,6 +16,7 @@ vi.mock('node:child_process', () => ({
 import { platform } from 'node:os'
 import { existsSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
+import { join } from 'node:path'
 import {
   resolveTool,
   androidHome,
@@ -62,18 +63,21 @@ describe('androidHome', () => {
 })
 
 describe('resolveTool', () => {
-  it('resolves adb under platform-tools when ANDROID_HOME set (posix)', () => {
+  it('resolves adb under platform-tools when ANDROID_HOME set', () => {
     process.env.ANDROID_HOME = '/home/sdk'
     mockPlatform.mockReturnValue('linux')
     mockExistsSync.mockReturnValue(true)
-    expect(resolveTool('adb')).toBe('/home/sdk/platform-tools/adb')
+    // Build the expected value with the real join() so the assertion uses the
+    // host separator (resolveTool uses node:path internally) — keeps this green
+    // on the Windows CI runner.
+    expect(resolveTool('adb')).toBe(join('/home/sdk', 'platform-tools', 'adb'))
   })
 
   it('resolves emulator under emulator/ dir', () => {
     process.env.ANDROID_HOME = '/home/sdk'
     mockPlatform.mockReturnValue('linux')
     mockExistsSync.mockReturnValue(true)
-    expect(resolveTool('emulator')).toBe('/home/sdk/emulator/emulator')
+    expect(resolveTool('emulator')).toBe(join('/home/sdk', 'emulator', 'emulator'))
   })
 
   it('appends .exe on win32', () => {
