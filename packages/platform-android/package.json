@@ -1,0 +1,48 @@
+{
+  "name": "@scout-mobile/platform-android",
+  "version": "0.2.3",
+  "description": "Android Emulator platform adapter for Scout — adb, emulator, and uiautomator integration",
+  "license": "AGPL-3.0",
+  "author": "Nicholas Kasten",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NickKasten/scout-mobile.git",
+    "directory": "packages/platform-android"
+  },
+  "homepage": "https://github.com/NickKasten/scout-mobile#readme",
+  "bugs": "https://github.com/NickKasten/scout-mobile/issues",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "prepublishOnly": "tsc --build"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "keywords": [
+    "mcp",
+    "android",
+    "emulator",
+    "adb",
+    "uiautomator",
+    "avd"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@scout-mobile/core": "0.2.3"
+  }
+}

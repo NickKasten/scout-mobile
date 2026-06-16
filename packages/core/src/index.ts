@@ -9,6 +9,8 @@ export {
   isUdid,
   validateDeviceIdentifier,
   validateAccessibilityLabel,
+  validateAndroidSerial,
+  validateAvdName,
 } from './validation.js'
 export type {
   PlatformAdapter,

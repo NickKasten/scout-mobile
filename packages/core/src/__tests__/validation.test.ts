@@ -9,6 +9,8 @@ import {
   isUdid,
   validateDeviceIdentifier,
   validateAccessibilityLabel,
+  validateAndroidSerial,
+  validateAvdName,
 } from '../validation.js'
 import { resolve } from 'node:path'
 import { ScoutValidationError } from '../errors.js'
@@ -202,5 +204,54 @@ describe('validateAccessibilityLabel', () => {
   it('rejects control characters', () => {
     expect(() => validateAccessibilityLabel('hello\x00world')).toThrow(ScoutValidationError)
     expect(() => validateAccessibilityLabel('test\nline')).toThrow(ScoutValidationError)
+  })
+})
+
+describe('validateAndroidSerial', () => {
+  it('accepts emulator serials', () => {
+    expect(validateAndroidSerial('emulator-5554')).toBe('emulator-5554')
+    expect(validateAndroidSerial('emulator-5556')).toBe('emulator-5556')
+  })
+
+  it('accepts network (host:port) serials', () => {
+    expect(validateAndroidSerial('127.0.0.1:5555')).toBe('127.0.0.1:5555')
+    expect(validateAndroidSerial('192.168.1.10:5555')).toBe('192.168.1.10:5555')
+  })
+
+  it('accepts physical device serials', () => {
+    expect(validateAndroidSerial('0A1B2C3D')).toBe('0A1B2C3D')
+    expect(validateAndroidSerial('R58M30ABCDE')).toBe('R58M30ABCDE')
+  })
+
+  it('rejects serials with spaces or shell metacharacters', () => {
+    expect(() => validateAndroidSerial('emulator 5554')).toThrow(ScoutValidationError)
+    expect(() => validateAndroidSerial('device;rm -rf /')).toThrow(ScoutValidationError)
+    expect(() => validateAndroidSerial('$(whoami)')).toThrow(ScoutValidationError)
+    expect(() => validateAndroidSerial('dev|cat')).toThrow(ScoutValidationError)
+  })
+
+  it('rejects empty string', () => {
+    expect(() => validateAndroidSerial('')).toThrow(ScoutValidationError)
+  })
+
+  it('rejects serials over 128 chars', () => {
+    expect(() => validateAndroidSerial('a'.repeat(129))).toThrow('too long')
+  })
+})
+
+describe('validateAvdName', () => {
+  it('accepts valid AVD names', () => {
+    expect(validateAvdName('Pixel_Fold_API_35')).toBe('Pixel_Fold_API_35')
+    expect(validateAvdName('Pixel-7.Pro_API-34')).toBe('Pixel-7.Pro_API-34')
+  })
+
+  it('rejects AVD names with spaces or special chars', () => {
+    expect(() => validateAvdName('My AVD')).toThrow(ScoutValidationError)
+    expect(() => validateAvdName('avd;hack')).toThrow(ScoutValidationError)
+    expect(() => validateAvdName('$(id)')).toThrow(ScoutValidationError)
+  })
+
+  it('rejects empty string', () => {
+    expect(() => validateAvdName('')).toThrow(ScoutValidationError)
   })
 })

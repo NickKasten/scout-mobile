@@ -79,6 +79,37 @@ export function validateDeviceIdentifier(value: string): string {
   return validateDeviceName(value)
 }
 
+// Android adb serial: "emulator-5554", "127.0.0.1:5555", or a device serial like
+// "0A1B2C3D". Allow alphanumerics plus the punctuation adb uses; reject spaces and
+// shell metacharacters so the value is safe to pass in an execFileSync args array.
+const ANDROID_SERIAL_RE = /^(emulator-\d+|[A-Za-z0-9._:-]+)$/
+
+export function validateAndroidSerial(serial: string): string {
+  if (!serial || serial.length === 0) {
+    throw new ScoutValidationError('Android serial must not be empty')
+  }
+  if (serial.length > 128) {
+    throw new ScoutValidationError(`Android serial too long (${serial.length} chars, max 128)`)
+  }
+  if (!ANDROID_SERIAL_RE.test(serial)) {
+    throw new ScoutValidationError(`Invalid Android serial: ${serial}`)
+  }
+  return serial
+}
+
+// AVD names are created by avdmanager; allow alphanumerics, dot, underscore, hyphen.
+const AVD_NAME_RE = /^[a-zA-Z0-9._-]+$/
+
+export function validateAvdName(name: string): string {
+  if (!name || name.length === 0) {
+    throw new ScoutValidationError('AVD name must not be empty')
+  }
+  if (!AVD_NAME_RE.test(name)) {
+    throw new ScoutValidationError(`Invalid AVD name: ${name}`)
+  }
+  return name
+}
+
 const LABEL_RE = /^[\x20-\x7E]+$/
 
 export function validateAccessibilityLabel(label: string): string {

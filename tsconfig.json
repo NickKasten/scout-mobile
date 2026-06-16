@@ -3,6 +3,7 @@
   "references": [
     { "path": "packages/core" },
     { "path": "packages/platform-ios" },
+    { "path": "packages/platform-android" },
     { "path": "packages/framework-rn" }
   ]
 }
