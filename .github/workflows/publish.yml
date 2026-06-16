@@ -38,5 +38,8 @@ jobs:
       - name: Publish @scout-mobile/platform-ios
         run: npm publish --provenance --access public -w packages/platform-ios
 
+      - name: Publish @scout-mobile/platform-android
+        run: npm publish --provenance --access public -w packages/platform-android
+
       - name: Publish @scout-mobile/framework-rn
         run: npm publish --provenance --access public -w packages/framework-rn

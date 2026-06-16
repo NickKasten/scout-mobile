@@ -104,7 +104,17 @@ function safeReportPath(reportDir: string, filename: string): string {
 
 ## Automated Scanning
 
-- **`npm audit`** runs in CI on every PR. High or critical severity vulnerabilities block merge.
+- **`npm audit --audit-level=high`** runs in CI on every PR (and again in the publish
+  workflow). High or critical severity vulnerabilities block merge/publish.
+- **Transitive vulnerabilities are patched with npm `overrides`.** When a high/critical
+  advisory lands in a transitive dependency that the direct dependency has not yet
+  picked up, pin the patched version in the root `package.json` `overrides` block
+  rather than weakening the audit gate. Use the narrowest compatible range and verify
+  the override satisfies the consuming package's declared range. (Example: `fast-uri`
+  `^3.1.2`, reached via `@modelcontextprotocol/sdk` → `ajv`.)
+- **Prefer upgrading the offending dev tool when an override would break it.** e.g. the
+  vite/esbuild advisories were cleared by moving to `vitest` 4 (vite 8 / rolldown),
+  not by force-overriding `esbuild` out of vite's supported range.
 - **`SECURITY.md`** in the repo with responsible disclosure policy and contact method.
 
 ---

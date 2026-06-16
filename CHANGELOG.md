@@ -3,6 +3,52 @@
 All notable changes to Scout Mobile are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/). Versioning: [SemVer](https://semver.org/).
 
+## [0.3.0] — 2026-06-16
+
+Phase 2+: Android support on every OS, an adapter-neutral MCP server, and
+cross-platform testing.
+
+### Added
+- **`@scout-mobile/platform-android`** — `AndroidEmulatorAdapter` driving `adb`,
+  `emulator`, and `uiautomator`. Runs on macOS, Windows, and Linux (no OS gate).
+  Includes SDK/adb/emulator/AVD environment checks, dynamic device dimensions
+  (`adb shell wm size`), and a dependency-free uiautomator XML accessibility parser.
+- **Adapter-neutral MCP server** — every operation is now registered under a
+  canonical `device_*` name plus a `simulator_*` deprecated alias (27 tools total:
+  13 + 13 + `scout_check_environment`). Tool descriptions adapt to the active
+  platform via an optional `AdapterMeta`.
+- **React Native Android build path** — `ReactNativeAdapter.build()` branches to
+  `gradlew assembleDebug` (`gradlew.bat` on Windows) when `platform: 'android'`.
+- **Target selection** — `resolveTarget(env, osPlatform)` picks one platform package
+  in the bin: `SCOUT_TARGET` wins, else macOS → iOS and every other OS → Android.
+  Only the selected package is lazy-loaded; a missing package prints a friendly
+  `npm install` message instead of a stack trace.
+- **Cross-platform + Android CI** — `pack:check` now runs on Windows too; the
+  integration job is split into `integration-ios` (macOS) and `integration-android`
+  (Ubuntu emulator). New cross-platform unit tests (iOS adapter throws cleanly off
+  macOS; path-traversal across separators) and Android adapter/env/parser suites.
+- **`docs/manual-test-windows.md`** — copy-paste Windows verification script, since
+  hosted Windows runners can't nest-virtualize an emulator.
+- `validateAndroidSerial` / `validateAvdName` input validators in `@scout-mobile/core`.
+
+### Changed
+- Coordinates are **physical pixels** on Android (vs logical points on iOS).
+- Upgraded `vitest` 3 → 4 (dev dependency), which resolves vite 8 / rolldown and
+  clears the audit-blocking vite/esbuild advisories.
+
+### Security
+- Added a root `overrides` pin for `fast-uri` (`^3.1.2`) to patch a high-severity
+  transitive (reached via `@modelcontextprotocol/sdk` → `ajv`) that the SDK had not
+  yet picked up. `npm audit --audit-level=high` is clean (0 vulnerabilities).
+
+### Fixed
+- Two Android `resolveTool` env-check tests hardcoded posix path separators and
+  failed on the Windows CI runner; they now build expectations with `path.join`.
+
+### Stats
+- 27 MCP tools (13 `device_*` + 13 `simulator_*` aliases + `scout_check_environment`),
+  336 unit tests.
+
 ## [0.2.3] — 2026-04-26
 
 ### Changed
