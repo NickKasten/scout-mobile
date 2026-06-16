@@ -32,21 +32,49 @@ jobs:
           node /tmp/package/bin/npm-cli.js install -g npm@11
           rm -rf /tmp/package
 
+      # Each step is idempotent: if that exact version is already on the
+      # registry it is skipped, so the workflow can be safely re-run/resumed
+      # after a partial publish (e.g. one package failing auth mid-release).
       - name: Publish @scout-mobile/core
-        run: npm publish --provenance --access public -w packages/core
+        run: |
+          v="$(node -p "require('./packages/core/package.json').version")"
+          if npm view "@scout-mobile/core@$v" version >/dev/null 2>&1; then
+            echo "@scout-mobile/core@$v already published — skipping."
+          else
+            npm publish --provenance --access public -w packages/core
+          fi
 
       - name: Publish @scout-mobile/platform-ios
-        run: npm publish --provenance --access public -w packages/platform-ios
+        run: |
+          v="$(node -p "require('./packages/platform-ios/package.json').version")"
+          if npm view "@scout-mobile/platform-ios@$v" version >/dev/null 2>&1; then
+            echo "@scout-mobile/platform-ios@$v already published — skipping."
+          else
+            npm publish --provenance --access public -w packages/platform-ios
+          fi
 
       # First publish of this package: it has no trusted publisher configured
       # yet (npm can't pre-configure OIDC for a non-existent package), so this
-      # step falls back to token auth. After 0.3.0 ships, configure a trusted
+      # step falls back to token auth. The NPM_TOKEN must be a granular token
+      # with "Bypass 2FA" enabled. After 0.3.0 ships, configure a trusted
       # publisher for @scout-mobile/platform-android and delete this env block +
       # the NPM_TOKEN secret so it matches the OIDC flow of the other packages.
       - name: Publish @scout-mobile/platform-android
-        run: npm publish --provenance --access public -w packages/platform-android
+        run: |
+          v="$(node -p "require('./packages/platform-android/package.json').version")"
+          if npm view "@scout-mobile/platform-android@$v" version >/dev/null 2>&1; then
+            echo "@scout-mobile/platform-android@$v already published — skipping."
+          else
+            npm publish --provenance --access public -w packages/platform-android
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @scout-mobile/framework-rn
-        run: npm publish --provenance --access public -w packages/framework-rn
+        run: |
+          v="$(node -p "require('./packages/framework-rn/package.json').version")"
+          if npm view "@scout-mobile/framework-rn@$v" version >/dev/null 2>&1; then
+            echo "@scout-mobile/framework-rn@$v already published — skipping."
+          else
+            npm publish --provenance --access public -w packages/framework-rn
+          fi
