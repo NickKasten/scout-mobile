@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync, readdirSync } from 'node:fs'
 import { join, basename } from 'node:path'
+import { platform as osPlatform } from 'node:os'
 import { request } from 'node:http'
 import type { FrameworkAdapter, ProjectConfig } from '@scout-mobile/core'
 import { ScoutEnvironmentError } from '@scout-mobile/core'
@@ -8,10 +9,12 @@ import { ScoutEnvironmentError } from '@scout-mobile/core'
 export class ReactNativeAdapter implements FrameworkAdapter {
   private config: ProjectConfig
   private metroPort: number
+  private platform: 'ios' | 'android'
 
   constructor(config: ProjectConfig) {
     this.config = config
     this.metroPort = config.metroPort ?? 8081
+    this.platform = config.platform ?? 'ios'
   }
 
   getBundleId(): string {
@@ -19,6 +22,10 @@ export class ReactNativeAdapter implements FrameworkAdapter {
   }
 
   async build(): Promise<string> {
+    return this.platform === 'android' ? this.buildAndroid() : this.buildIos()
+  }
+
+  private async buildIos(): Promise<string> {
     const iosDir = join(this.config.projectRoot, 'ios')
     if (!existsSync(iosDir)) {
       throw new ScoutEnvironmentError(`ios/ directory not found in ${this.config.projectRoot}`)
@@ -45,6 +52,44 @@ export class ReactNativeAdapter implements FrameworkAdapter {
     })
 
     return this.findAppBundle(derivedDataPath)
+  }
+
+  private async buildAndroid(): Promise<string> {
+    const androidDir = join(this.config.projectRoot, 'android')
+    if (!existsSync(androidDir)) {
+      throw new ScoutEnvironmentError(`android/ directory not found in ${this.config.projectRoot}`)
+    }
+
+    // The Gradle wrapper ships in the android/ dir; Windows uses gradlew.bat.
+    const isWin = osPlatform() === 'win32'
+    const gradlew = join(androidDir, isWin ? 'gradlew.bat' : 'gradlew')
+    if (!existsSync(gradlew)) {
+      throw new ScoutEnvironmentError(`Gradle wrapper not found at ${gradlew}`)
+    }
+
+    execFileSync(gradlew, ['assembleDebug'], {
+      stdio: 'ignore',
+      timeout: 5 * 60 * 1000,
+      cwd: androidDir,
+    })
+
+    return this.findApk(androidDir)
+  }
+
+  private findApk(androidDir: string): string {
+    const apkPath = join(
+      androidDir,
+      'app',
+      'build',
+      'outputs',
+      'apk',
+      'debug',
+      'app-debug.apk',
+    )
+    if (!existsSync(apkPath)) {
+      throw new ScoutEnvironmentError(`APK not found at ${apkPath}`)
+    }
+    return apkPath
   }
 
   async *getMetroLogs(): AsyncIterable<string> {

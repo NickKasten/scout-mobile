@@ -29,6 +29,8 @@ export type {
   ProjectConfig,
 } from './adapters/FrameworkAdapter.js'
 export { createScoutServer } from './server.js'
+export { resolveTarget } from './targetSelection.js'
+export type { ScoutTarget } from './targetSelection.js'
 export {
   generateReport,
   generateSummary,
