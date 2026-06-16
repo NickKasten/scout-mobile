@@ -38,8 +38,15 @@ jobs:
       - name: Publish @scout-mobile/platform-ios
         run: npm publish --provenance --access public -w packages/platform-ios
 
+      # First publish of this package: it has no trusted publisher configured
+      # yet (npm can't pre-configure OIDC for a non-existent package), so this
+      # step falls back to token auth. After 0.3.0 ships, configure a trusted
+      # publisher for @scout-mobile/platform-android and delete this env block +
+      # the NPM_TOKEN secret so it matches the OIDC flow of the other packages.
       - name: Publish @scout-mobile/platform-android
         run: npm publish --provenance --access public -w packages/platform-android
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish @scout-mobile/framework-rn
         run: npm publish --provenance --access public -w packages/framework-rn
