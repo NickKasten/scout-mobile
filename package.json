@@ -12,7 +12,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --build --noEmit",
-    "test:integration": "vitest run --config packages/platform-ios/vitest.integration.config.ts",
+    "test:integration": "npm run test:integration:ios && npm run test:integration:android",
+    "test:integration:ios": "vitest run --config packages/platform-ios/vitest.integration.config.ts",
+    "test:integration:android": "npm run test:integration -w @scout-mobile/platform-android",
     "pack:check": "npm run build && npm pack --dry-run --workspaces"
   },
   "devDependencies": {

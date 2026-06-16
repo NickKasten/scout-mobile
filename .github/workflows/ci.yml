@@ -25,11 +25,13 @@ jobs:
       - run: npm run typecheck
       - run: npm run test
       - run: npm audit --audit-level=high
+      # Pack on both Ubuntu and Windows: Windows surfaces path/bin/tarball issues
+      # (line endings, executable bits, separators) that Ubuntu alone can hide.
       - name: Verify publishable packages
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'windows-latest'
         run: npm run pack:check
 
-  integration:
+  integration-ios:
     runs-on: macos-latest
     if: github.ref == 'refs/heads/main'
     steps:
@@ -47,4 +49,36 @@ jobs:
 
       - run: npm ci
       - run: npm run build
-      - run: npm run test:integration
+      - run: npm run test:integration:ios
+
+  integration-android:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      # Hardware-accelerate the emulator via KVM on the ubuntu runner.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run Android integration tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          disable-animations: true
+          script: npm run test:integration:android

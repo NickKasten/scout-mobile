@@ -26,6 +26,7 @@
     "LICENSE"
   ],
   "scripts": {
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "prepublishOnly": "tsc --build"
   },
   "engines": {
